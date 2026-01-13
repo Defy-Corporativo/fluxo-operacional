@@ -1,0 +1,751 @@
+/* TarefaDetailModal - Mobile First Layout */
+
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 1000;
+    padding: 0;
+}
+
+@media (min-width: 768px) {
+    .overlay {
+        align-items: center;
+        padding: var(--spacing-lg);
+    }
+}
+
+.modal {
+    background: var(--bg-primary);
+    width: 100%;
+    max-height: 90vh;
+    border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.15);
+}
+
+@media (min-width: 768px) {
+    .modal {
+        max-width: 700px;
+        max-height: 85vh;
+        border-radius: var(--border-radius-lg);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+}
+
+@media (min-width: 1024px) {
+    .modal {
+        max-width: 800px;
+        max-height: 90vh;
+    }
+}
+
+/* Header */
+.header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: var(--spacing-lg);
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    gap: var(--spacing-md);
+}
+
+.headerContent {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    flex: 1;
+    min-width: 0;
+}
+
+.headerIcon {
+    flex-shrink: 0;
+    opacity: 0.9;
+    margin-top: 2px;
+}
+
+.headerText {
+    flex: 1;
+    min-width: 0;
+}
+
+.headerCodigo {
+    font-size: 10px;
+    font-weight: 500;
+    opacity: 0.8;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.headerTitulo {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    margin: 0;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.closeBtn {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    color: white;
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.closeBtn:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* Content */
+.content {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.loading {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--text-secondary);
+}
+
+/* Status Card */
+.statusCard {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm) 0;
+}
+
+.statusLabel {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.statusBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    border-radius: var(--border-radius-sm);
+}
+
+.statusBadge.pendente {
+    background: var(--color-warning-light, #fef3c7);
+    color: var(--color-warning-dark, #b45309);
+}
+
+.statusBadge.concluida {
+    background: var(--color-success-light, #d1fae5);
+    color: var(--color-success-dark, #047857);
+}
+
+/* Details Grid */
+.detailsGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+}
+
+@media (min-width: 480px) {
+    .detailsGrid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* Form Row for 2 columns */
+.formRow {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+}
+
+@media (min-width: 480px) {
+    .formRow {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.formRow .formGroup {
+    margin-bottom: 0;
+}
+
+/* Descrição Section */
+.descricaoSection {
+    padding: var(--spacing-md);
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--border-color-light);
+}
+
+.descricaoTitle {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin: 0 0 var(--spacing-sm) 0;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.descricaoTexto {
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+    line-height: 1.6;
+    margin: 0;
+    white-space: pre-wrap;
+}
+
+.detailCard {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--border-color-light);
+}
+
+.detailCard.fullWidth {
+    grid-column: 1 / -1;
+}
+
+.detailIcon {
+    color: var(--color-primary);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.detailContent {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.detailLabel {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.detailValue {
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* Action Buttons */
+.actionButtons {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.editBtn,
+.deleteBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    flex: 1;
+}
+
+.editBtn {
+    background: var(--bg-secondary);
+    color: var(--color-primary);
+    border: 1px solid var(--color-primary);
+}
+
+.editBtn:hover {
+    background: var(--color-primary-light);
+}
+
+.deleteBtn {
+    background: var(--bg-secondary);
+    color: var(--color-danger, #dc2626);
+    border: 1px solid var(--color-danger, #dc2626);
+}
+
+.deleteBtn:hover {
+    background: var(--color-danger-light, #fee2e2);
+}
+
+/* Edit Section */
+.editSection {
+    background: var(--bg-secondary);
+    padding: var(--spacing-lg);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--border-color-light);
+}
+
+.formGroup {
+    margin-bottom: var(--spacing-md);
+}
+
+.formGroup:last-of-type {
+    margin-bottom: var(--spacing-lg);
+}
+
+.label {
+    display: block;
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.input,
+.textarea {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-sm);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: border-color var(--transition-base);
+}
+
+.input:focus,
+.textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+.textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.editActions {
+    display: flex;
+    gap: var(--spacing-sm);
+    justify-content: flex-end;
+}
+
+.cancelBtn,
+.saveBtn {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.cancelBtn {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.cancelBtn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.saveBtn {
+    background: var(--color-primary);
+    color: white;
+    border: none;
+}
+
+.saveBtn:hover {
+    background: var(--color-primary-dark);
+}
+
+.saveBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Notas Section */
+.notasSection {
+    border-top: 1px solid var(--border-color-light);
+    padding-top: var(--spacing-lg);
+}
+
+.notasHeader {
+    margin-bottom: var(--spacing-md);
+}
+
+.notasTitle {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.notaForm {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+@media (min-width: 480px) {
+    .notaForm {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+}
+
+.notaInput {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-sm);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    resize: none;
+    min-height: 60px;
+    box-sizing: border-box;
+}
+
+.notaInput:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+.notaInput::placeholder {
+    color: var(--text-tertiary);
+}
+
+.notaAddBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    background: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    white-space: nowrap;
+}
+
+.notaAddBtn:hover {
+    background: var(--color-primary-dark);
+}
+
+.notaAddBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.notasList {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.notasEmpty {
+    text-align: center;
+    color: var(--text-tertiary);
+    font-size: var(--font-size-sm);
+    padding: var(--spacing-md);
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius-sm);
+}
+
+.notaItem {
+    display: flex;
+    gap: var(--spacing-md);
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-md);
+    border: 1px solid var(--border-color-light);
+}
+
+.notaIconArea {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.notaIcon {
+    color: var(--text-tertiary);
+}
+
+.notaIconLabel {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.notaContent {
+    flex: 1;
+    min-width: 0;
+}
+
+.notaMeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    align-items: center;
+    margin-bottom: var(--spacing-xs);
+}
+
+.notaAutor {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.notaData {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+}
+
+.notaTexto {
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+    line-height: 1.5;
+    margin: 0 0 var(--spacing-xs) 0;
+    white-space: pre-wrap;
+}
+
+.notaActions {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-xs);
+}
+
+.notaEditBtn,
+.notaDeleteBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    font-size: var(--font-size-xs);
+    background: none;
+    border: none;
+    border-radius: var(--border-radius-xs);
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.notaEditBtn:hover {
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+}
+
+.notaDeleteBtn:hover {
+    background: var(--color-danger-light, #fee2e2);
+    color: var(--color-danger, #dc2626);
+}
+
+/* Nota Edit Form */
+.notaEditForm {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.notaEditInput {
+    width: 100%;
+    padding: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    resize: none;
+    font-family: inherit;
+}
+
+.notaEditInput:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+.notaEditActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-sm);
+}
+
+.notaCancelBtn,
+.notaSaveBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-sm);
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.notaCancelBtn {
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.notaCancelBtn:hover {
+    background: var(--bg-hover);
+}
+
+.notaSaveBtn {
+    background: var(--color-primary);
+    color: white;
+    border: none;
+}
+
+.notaSaveBtn:hover {
+    background: var(--color-primary-dark);
+}
+
+/* Nota Form Adjustments */
+.notaForm {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.notaAddBtn {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-md);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    background: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.notaAddBtn:hover:not(:disabled) {
+    background: var(--color-primary-dark);
+}
+
+.notaAddBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Footer */
+.footer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-top: 1px solid var(--border-color-light);
+    background: var(--bg-secondary);
+}
+
+@media (min-width: 768px) {
+    .footer {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+}
+
+.footerCloseBtn {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    font-size: var(--font-size-md);
+    font-weight: 500;
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    order: 2;
+}
+
+@media (min-width: 768px) {
+    .footerCloseBtn {
+        order: 1;
+    }
+}
+
+.footerCloseBtn:hover {
+    background: #e5e7eb;
+    color: var(--text-primary);
+    border-color: #9ca3af;
+}
+
+.footerConcluirBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    background: var(--color-success, #059669);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    order: 1;
+}
+
+@media (min-width: 768px) {
+    .footerConcluirBtn {
+        order: 2;
+    }
+}
+
+.footerConcluirBtn:hover {
+    background: var(--color-success-dark, #047857);
+}
+
+.footerConcluirBtn.reabrir {
+    background: var(--color-warning, #d97706);
+}
+
+.footerConcluirBtn.reabrir:hover {
+    background: var(--color-warning-dark, #b45309);
+}

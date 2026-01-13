@@ -1,0 +1,294 @@
+/* TarefasView Styles */
+
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xl);
+    color: var(--text-secondary);
+}
+
+/* View Toggle */
+.viewToggle {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md);
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--border-color-light);
+}
+
+.viewLabel {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.toggleButtons {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+.toggleBtn {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--bg-main);
+    border: 1px solid var(--border-color-light);
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.toggleBtn:hover {
+    background: var(--bg-hover);
+    border-color: var(--color-primary);
+}
+
+.toggleBtn.active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
+}
+
+/* Empty State */
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-2xl);
+    text-align: center;
+}
+
+.emptyIcon {
+    color: var(--text-tertiary);
+    margin-bottom: var(--spacing-md);
+}
+
+.emptyTitle {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 var(--spacing-xs);
+}
+
+.emptyDescription {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* Groups Container */
+.groupsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+/* Group Card */
+.groupCard {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color-light);
+    border-radius: var(--border-radius-md);
+    overflow: hidden;
+}
+
+.groupHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark, #1d4ed8) 100%);
+    color: white;
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.groupHeader:hover {
+    filter: brightness(1.05);
+}
+
+.groupInfo {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.groupIcon {
+    opacity: 0.9;
+}
+
+.groupName {
+    font-weight: 600;
+    font-size: var(--font-size-md);
+}
+
+.groupCount {
+    font-size: var(--font-size-xs);
+    background: rgba(255, 255, 255, 0.2);
+    padding: 2px 8px;
+    border-radius: var(--border-radius-sm);
+}
+
+.groupActions {
+    display: flex;
+    align-items: center;
+}
+
+/* Group Content */
+.groupContent {
+    padding: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+/* Tarefa Item */
+.tarefaItem {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background: var(--bg-main);
+    border: 1px solid var(--border-color-light);
+    border-radius: var(--border-radius-sm);
+    transition: all var(--transition-base);
+}
+
+.tarefaItem:hover {
+    border-color: var(--color-primary-light);
+    box-shadow: var(--shadow-sm);
+}
+
+.tarefaItem.concluida {
+    background: var(--color-success-light, #d1fae5);
+    border-color: var(--color-success, #10b981);
+}
+
+.tarefaItem.atrasada {
+    background: var(--color-danger-light, #fee2e2);
+    border-color: var(--color-danger, #ef4444);
+}
+
+.tarefaCheck {
+    flex-shrink: 0;
+    padding-top: 2px;
+}
+
+.checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: default;
+}
+
+.tarefaContent {
+    flex: 1;
+    min-width: 0;
+}
+
+.tarefaTop {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+}
+
+.tarefaCodigo {
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--color-warning, #d97706);
+    background: var(--color-warning-light, #fef3c7);
+    padding: 2px 6px;
+    border-radius: var(--border-radius-sm);
+    flex-shrink: 0;
+}
+
+.tarefaDescricao {
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+    line-height: 1.4;
+}
+
+.textConcluida {
+    text-decoration: line-through;
+    color: var(--text-tertiary);
+}
+
+.tarefaMeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+}
+
+.metaItem {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .viewToggle {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--spacing-sm);
+    }
+
+    .toggleButtons {
+        flex-direction: column;
+    }
+
+    .toggleBtn {
+        justify-content: center;
+        width: 100%;
+    }
+
+    .groupHeader {
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+
+    .groupInfo {
+        flex-wrap: wrap;
+    }
+
+    .groupName {
+        font-size: var(--font-size-sm);
+    }
+
+    .tarefaItem {
+        padding: var(--spacing-sm);
+    }
+
+    .tarefaTop {
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+
+    .tarefaMeta {
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+}
+
+/* Tarefa Chevron */
+.tarefaChevron {
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+    margin-left: auto;
+    transition: color var(--transition-base);
+}
+
+.tarefaItem:hover .tarefaChevron {
+    color: var(--color-primary);
+}

@@ -7,6 +7,9 @@ import Login from './components/auth/Login';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import MainLayout from './components/layout/MainLayout';
 import Settings from './components/settings/Settings';
+import FrentesEstrategicas from './components/frentes/FrentesEstrategicas';
+import TarefasView from './components/tarefas/TarefasView';
+import Acompanhamento from './components/acompanhamento/Acompanhamento';
 import DebugLogViewer from './components/debug/DebugLogViewer';
 
 const App = () => {
@@ -24,7 +27,10 @@ const App = () => {
                                 </ProtectedRoute>
                             }
                         >
-                            <Route index element={<Settings />} />
+                            <Route index element={<FrentesEstrategicas />} />
+                            <Route path="frentes" element={<FrentesEstrategicas />} />
+                            <Route path="tarefas" element={<TarefasView />} />
+                            <Route path="acompanhamento" element={<Acompanhamento />} />
                             <Route path="settings" element={<Settings />} />
                         </Route>
                     </Routes>
@@ -36,3 +42,4 @@ const App = () => {
 }
 
 export default App;
+

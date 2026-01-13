@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Settings, Menu, ChevronLeft, HelpCircle } from 'lucide-react';
+import { Settings, Menu, ChevronLeft, ClipboardList, Target, CheckSquare, TrendingUp } from 'lucide-react';
 import styles from './Layout.module.css';
 
 const Sidebar = ({ isCollapsed, onToggle }) => {
@@ -31,11 +31,11 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
                         <>
                             <div className={styles.appBrand}>
                                 <div className={styles.appIcon}>
-                                    <HelpCircle size={22} />
+                                    <ClipboardList size={22} />
                                 </div>
                                 <div className={styles.appBrandText}>
-                                    <span className={styles.appName}>Boilerplate</span>
-                                    <span className={styles.appTagline}>Corporativo</span>
+                                    <span className={styles.appName}>Fluxo</span>
+                                    <span className={styles.appTagline}>Operacional</span>
                                 </div>
                             </div>
                             <button
@@ -49,6 +49,40 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
                     )}
                 </div>
                 <nav className={styles.nav}>
+                    <NavLink
+                        to="/"
+                        end
+                        className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}
+                        title="Fluxo Operacional"
+                        onClick={() => {
+                            window.innerWidth < 768 && onToggle();
+                        }}
+                    >
+                        <Target size={20} />
+                        {!isCollapsed && <span>Fluxo Operacional</span>}
+                    </NavLink>
+                    <NavLink
+                        to="/tarefas"
+                        className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}
+                        title="Tarefas"
+                        onClick={() => {
+                            window.innerWidth < 768 && onToggle();
+                        }}
+                    >
+                        <CheckSquare size={20} />
+                        {!isCollapsed && <span>Tarefas</span>}
+                    </NavLink>
+                    <NavLink
+                        to="/acompanhamento"
+                        className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}
+                        title="Acompanhamento"
+                        onClick={() => {
+                            window.innerWidth < 768 && onToggle();
+                        }}
+                    >
+                        <TrendingUp size={20} />
+                        {!isCollapsed && <span>Acompanhamento</span>}
+                    </NavLink>
                     <NavLink
                         to="/settings"
                         className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}
@@ -67,3 +101,4 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
 };
 
 export default Sidebar;
+

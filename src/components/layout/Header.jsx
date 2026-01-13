@@ -71,7 +71,7 @@ const Header = ({ onMenuToggle }) => {
                             <Menu size={24} />
                         </button>
                     )}
-                    <h2 className={styles.pageTitle}>Boilerplate Corporativo</h2>
+                    <h2 className={styles.pageTitle}>Fluxo Operacional</h2>
                 </div>
                 <div className={styles.userInfo} ref={menuRef}>
                     <span className={styles.userName}>{getUserName()}</span>

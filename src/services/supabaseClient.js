@@ -21,7 +21,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // Use a dedicated storage key to avoid clashes with other Supabase clients in the same browser
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
-        storageKey: 'sb-boilerplate-auth',
+        storageKey: 'sb-fluxo-operacional-auth',
     },
 });
 logDebug('Supabase client created');

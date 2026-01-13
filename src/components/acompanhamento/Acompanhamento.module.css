@@ -1,0 +1,587 @@
+/* Acompanhamento - Mobile First Layout */
+
+.container {
+    padding: var(--spacing-md);
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+    .container {
+        padding: var(--spacing-xl);
+    }
+}
+
+/* Header */
+.header {
+    margin-bottom: var(--spacing-lg);
+}
+
+.title {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    font-size: var(--font-size-2xl);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.title svg {
+    color: var(--color-primary);
+}
+
+/* Filter Section */
+.filterSection {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-lg);
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--border-color-light);
+}
+
+@media (min-width: 768px) {
+    .filterSection {
+        flex-direction: row;
+        align-items: flex-end;
+    }
+}
+
+.filterGroup {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.filterLabel {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.filterSelect {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-md);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+.filterSelect:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.filterSelect:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+/* Project Info */
+.projectInfo {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    border-radius: var(--border-radius-md);
+    color: white;
+}
+
+.projectBadge {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+}
+
+.projectName {
+    font-size: var(--font-size-md);
+    font-weight: 500;
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-lg);
+    border-bottom: 2px solid var(--border-color-light);
+}
+
+.tab {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: var(--font-size-md);
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: all var(--transition-base);
+}
+
+.tab:hover {
+    color: var(--color-primary);
+}
+
+.tab.active {
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+}
+
+/* Tab Content */
+.tabContent {
+    min-height: 400px;
+}
+
+/* Loading */
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xl);
+    color: var(--text-secondary);
+    font-size: var(--font-size-md);
+}
+
+/* Empty State */
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-2xl);
+    text-align: center;
+}
+
+.emptyIcon {
+    color: var(--text-tertiary);
+    margin-bottom: var(--spacing-lg);
+}
+
+.emptyTitle {
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 var(--spacing-sm) 0;
+}
+
+.emptyDescription {
+    font-size: var(--font-size-md);
+    color: var(--text-secondary);
+    max-width: 400px;
+    margin: 0;
+}
+
+/* ============================================= */
+/* GANTT CHART */
+/* ============================================= */
+
+.ganttContainer {
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--border-color-light);
+    padding: var(--spacing-lg);
+    overflow-x: auto;
+}
+
+.ganttEmpty {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--text-secondary);
+}
+
+.ganttLegend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--border-color-light);
+}
+
+.legendItem {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+.legendColor {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+}
+
+.legendColor.objetivo {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+.legendColor.pendente {
+    background: var(--color-warning, #d97706);
+}
+
+.legendColor.concluida {
+    background: var(--color-success, #059669);
+}
+
+.legendColor.atrasada {
+    background: var(--color-danger, #dc2626);
+}
+
+.legendColor.excede {
+    background: repeating-linear-gradient(-45deg,
+            #f97316,
+            #f97316 2px,
+            #fb923c 2px,
+            #fb923c 4px);
+    border: 1px solid #c2410c;
+}
+
+/* Gantt Header - Estrutura igual ao row */
+.ganttHeader {
+    display: flex;
+    align-items: flex-end;
+    margin-bottom: var(--spacing-sm);
+}
+
+.ganttLabelHeader {
+    width: 42%;
+    min-width: 280px;
+    max-width: 500px;
+    flex-shrink: 0;
+}
+
+@media (min-width: 1200px) {
+    .ganttLabelHeader {
+        width: 45%;
+        max-width: 550px;
+    }
+}
+
+.ganttTimeAxisWrapper {
+    flex: 1;
+    min-width: 0;
+}
+
+.ganttTimeAxis {
+    position: relative;
+    height: 32px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.timeLabel {
+    position: absolute;
+    bottom: 4px;
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    transform: translateX(-50%);
+}
+
+.todayMarker {
+    position: absolute;
+    bottom: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-danger, #dc2626);
+    transform: translateX(-50%);
+    background: var(--bg-secondary);
+    padding: 0 4px;
+}
+
+.ganttChart {
+    display: flex;
+    position: relative;
+    min-width: 600px;
+}
+
+/* Coluna de Labels */
+.ganttLabelsColumn {
+    width: 42%;
+    min-width: 280px;
+    max-width: 500px;
+    flex-shrink: 0;
+}
+
+@media (min-width: 1200px) {
+    .ganttLabelsColumn {
+        width: 45%;
+        max-width: 550px;
+    }
+}
+
+/* Coluna de Barras */
+.ganttBarsColumn {
+    flex: 1;
+    position: relative;
+    min-width: 0;
+}
+
+/* Linha única de HOJE atravessando todo o gráfico */
+.todayLineGlobal {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--color-danger, #dc2626);
+    z-index: 10;
+    pointer-events: none;
+}
+
+/* Grupos */
+.ganttGroup {
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--border-color-light);
+}
+
+.ganttGroup:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.ganttBarsGroup {
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid transparent;
+}
+
+.ganttBarsGroup:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+/* Linhas de Label */
+.ganttLabelRow {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    min-height: 40px;
+    padding: var(--spacing-xs) var(--spacing-md) var(--spacing-xs) 0;
+    font-size: var(--font-size-sm);
+}
+
+.ganttLabelRow.tarefaLabelRow {
+    padding-left: var(--spacing-lg);
+}
+
+/* Linhas de Barra */
+.ganttBarRow {
+    position: relative;
+    height: 40px;
+    padding: var(--spacing-xs) 0;
+}
+
+.ganttBarRow.tarefaBarRow {
+    /* Alinhamento com tarefas */
+}
+
+.ganttIcon {
+    flex-shrink: 0;
+    margin-top: 3px;
+    color: var(--text-tertiary);
+}
+
+.ganttLabelText {
+    color: var(--text-primary);
+    font-weight: 500;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.alertIcon {
+    color: var(--color-danger, #dc2626);
+    flex-shrink: 0;
+    display: inline;
+    vertical-align: middle;
+    margin-left: 4px;
+}
+
+.ganttBar {
+    position: absolute;
+    height: 22px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 var(--spacing-xs);
+    font-size: 10px;
+    color: white;
+    min-width: 20px;
+}
+
+.objetivoBar {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+.tarefaBar {
+    height: 18px;
+}
+
+.tarefaBar.pendente {
+    background: var(--color-warning, #d97706);
+}
+
+.tarefaBar.concluida {
+    background: var(--color-success, #059669);
+}
+
+.tarefaBar.atrasada {
+    background: var(--color-danger, #dc2626);
+}
+
+.tarefaBar.excede {
+    background: repeating-linear-gradient(-45deg,
+            #f97316,
+            #f97316 4px,
+            #fb923c 4px,
+            #fb923c 8px);
+    border: 2px solid #c2410c;
+}
+
+.barDate {
+    font-size: 9px;
+    opacity: 0.9;
+}
+
+/* ============================================= */
+/* CHARTS PANEL */
+/* ============================================= */
+
+.chartsGrid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.bigNumbers {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-md);
+}
+
+@media (min-width: 768px) {
+    .bigNumbers {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.bigNumber {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-lg);
+    border-radius: var(--border-radius-lg);
+    text-align: center;
+}
+
+.bigNumber.total {
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+    color: #1d4ed8;
+}
+
+.bigNumber.concluidas {
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+    color: #047857;
+}
+
+.bigNumber.pendentes {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    color: #b45309;
+}
+
+.bigNumber.atrasadas {
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    color: #b91c1c;
+}
+
+.bigNumberValue {
+    font-size: var(--font-size-3xl);
+    font-weight: 700;
+}
+
+.bigNumberLabel {
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+}
+
+.chartCard {
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--border-color-light);
+    padding: var(--spacing-lg);
+}
+
+.chartCard.fullWidth {
+    grid-column: 1 / -1;
+}
+
+.chartTitle {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 var(--spacing-md) 0;
+}
+
+.chartContainer {
+    min-height: 200px;
+}
+
+.chartFooter {
+    text-align: center;
+    margin-top: var(--spacing-md);
+}
+
+.progressPercent {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--color-success, #059669);
+}
+
+.noData {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: var(--text-tertiary);
+    font-style: italic;
+}
+
+@media (min-width: 768px) {
+    .chartsGrid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .bigNumbers {
+        grid-column: 1 / -1;
+    }
+
+    .chartCard.fullWidth {
+        grid-column: 1 / -1;
+    }
+}
