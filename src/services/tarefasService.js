@@ -10,7 +10,7 @@ export const getAll = async () => {
         .from(TABLE_NAME)
         .select(`
             *,
-            objetivo:flop_objetivos(id, codigo, descricao)
+            objetivo:flop_objetivos(id, codigo, descricao, projeto_id)
         `)
         .order('codigo', { ascending: true });
 

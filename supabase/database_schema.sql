@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS flop_objetivos (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     codigo VARCHAR(10) NOT NULL UNIQUE, -- Formato OB001
     titulo VARCHAR(200) NOT NULL,
-    descricao VARCHAR(500) NOT NULL,
+    descricao VARCHAR(500), -- Descrição opcional
     responsavel VARCHAR(255),
     data_expectativa DATE,
     projeto_id UUID NOT NULL REFERENCES flop_projetos(id) ON DELETE CASCADE,

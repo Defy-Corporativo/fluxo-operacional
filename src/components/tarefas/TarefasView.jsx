@@ -16,6 +16,7 @@ const TarefasView = () => {
     const [expandedGroups, setExpandedGroups] = useState({});
     const [selectedTarefa, setSelectedTarefa] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [filterPendingOnly, setFilterPendingOnly] = useState(false);
 
     useEffect(() => {
         loadData();
@@ -45,19 +46,30 @@ const TarefasView = () => {
         }
     };
 
-    // Filtered tarefas based on search term
+    // Filtered tarefas based on search term and pending filter
     const filteredTarefas = useMemo(() => {
-        if (!searchTerm.trim()) return tarefas;
-        const term = searchTerm.toLowerCase();
-        return tarefas.filter(tarefa => {
-            const titulo = (tarefa.titulo || tarefa.descricao || '').toLowerCase();
-            const responsavel = (tarefa.responsavel || '').toLowerCase();
-            const objetivoCodigo = (tarefa.objetivo?.codigo || '').toLowerCase();
-            const projeto = projetos.find(p => p.id === tarefa.objetivo?.projeto_id);
-            const projetoNome = projeto ? (projeto.codigo + ' ' + projeto.descricao).toLowerCase() : '';
-            return titulo.includes(term) || responsavel.includes(term) || objetivoCodigo.includes(term) || projetoNome.includes(term);
-        });
-    }, [tarefas, projetos, searchTerm]);
+        let result = tarefas;
+
+        // Apply pending filter
+        if (filterPendingOnly) {
+            result = result.filter(tarefa => !tarefa.concluida);
+        }
+
+        // Apply search filter
+        if (searchTerm.trim()) {
+            const term = searchTerm.toLowerCase();
+            result = result.filter(tarefa => {
+                const titulo = (tarefa.titulo || tarefa.descricao || '').toLowerCase();
+                const responsavel = (tarefa.responsavel || '').toLowerCase();
+                const objetivoCodigo = (tarefa.objetivo?.codigo || '').toLowerCase();
+                const projeto = projetos.find(p => p.id === tarefa.objetivo?.projeto_id);
+                const projetoNome = projeto ? (projeto.codigo + ' ' + projeto.descricao).toLowerCase() : '';
+                return titulo.includes(term) || responsavel.includes(term) || objetivoCodigo.includes(term) || projetoNome.includes(term);
+            });
+        }
+
+        return result;
+    }, [tarefas, projetos, searchTerm, filterPendingOnly]);
 
     // Group tarefas by responsavel or projeto
     const groupedTarefas = useMemo(() => {
@@ -86,7 +98,7 @@ const TarefasView = () => {
                 if (!groups[key]) {
                     groups[key] = {
                         id: projetoId,
-                        name: projeto ? `${projeto.codigo} - ${projeto.descricao}` : 'Sem Projeto',
+                        name: projeto ? projeto.descricao : 'Sem Projeto',
                         tarefas: []
                     };
                 }
@@ -177,6 +189,14 @@ const TarefasView = () => {
                         Projeto
                     </button>
                 </div>
+                <button
+                    className={`${styles.toggleBtn} ${filterPendingOnly ? styles.active : ''}`}
+                    onClick={() => setFilterPendingOnly(!filterPendingOnly)}
+                    title="Mostrar apenas tarefas pendentes"
+                >
+                    <CheckSquare size={16} />
+                    Pendentes
+                </button>
             </div>
 
             {/* Grouped Tarefas */}

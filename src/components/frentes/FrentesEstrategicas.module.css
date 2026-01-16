@@ -248,6 +248,75 @@
     color: white;
 }
 
+/* View Toggle Controls */
+.viewToggle {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.viewLabel {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.toggleButtons {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+.toggleBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.toggleBtn:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.toggleBtn.active {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+/* Frente Tag (for project view) */
+.frenteTag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: var(--border-radius-sm);
+    font-size: 11px;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+/* Projeto Meta (for project list view) */
+.projetoMeta {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-right: var(--spacing-md);
+}
+
 /* Add Project Header Button */
 .addProjectHeaderBtn {
     display: flex;
@@ -858,6 +927,11 @@
     font-size: var(--font-size-xl);
     font-weight: 600;
     color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+    word-break: break-word;
 }
 
 .modalClose {
@@ -1272,6 +1346,56 @@
     margin-bottom: var(--spacing-lg);
 }
 
+/* Objetivo Detail Cards */
+.objetivoDetailCards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
+}
+
+@media (max-width: 600px) {
+    .objetivoDetailCards {
+        grid-template-columns: 1fr;
+    }
+}
+
+.detailCard {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background: var(--bg-secondary, #f8fafc);
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--border-color-light);
+}
+
+.detailCardIcon {
+    color: var(--color-primary);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.detailCardContent {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.detailCardLabel {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.detailCardValue {
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
 .tarefasSection {
     margin-top: var(--spacing-md);
 }
@@ -1313,8 +1437,39 @@
         flex: 1;
         min-width: 140px;
     }
+
+    .searchBarSmall {
+        flex: 1 1 100%;
+        order: -1;
+    }
 }
 
+/* Small Search Bar for filter rows */
+.searchBarSmall {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    flex: 1;
+    min-width: 150px;
+}
+
+.searchInputSmall {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+    outline: none;
+    min-width: 80px;
+}
+
+.searchInputSmall::placeholder {
+    color: var(--text-tertiary);
+}
 
 .tarefasListDetail {
     display: flex;

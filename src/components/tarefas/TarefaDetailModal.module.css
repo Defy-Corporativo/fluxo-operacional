@@ -88,10 +88,7 @@
     font-weight: 600;
     margin: 0;
     line-height: 1.3;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    word-break: break-word;
 }
 
 .closeBtn {
@@ -408,6 +405,30 @@
     font-weight: 600;
     color: var(--text-primary);
     margin: 0;
+}
+
+/* Nota Search Bar */
+.notaSearchBar {
+    margin-bottom: var(--spacing-md);
+}
+
+.notaSearchInput {
+    width: 100%;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-sm);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.notaSearchInput:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+.notaSearchInput::placeholder {
+    color: var(--text-tertiary);
 }
 
 .notaForm {
@@ -781,8 +802,15 @@
 .footerActions {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: var(--spacing-sm);
     width: 100%;
+}
+
+.footerLeft {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
 }
 
 .editBtnSimple,

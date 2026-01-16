@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     X, CheckSquare, Calendar, User, Pencil, Save,
-    MessageSquare, Plus, Trash2, FolderKanban, Check
+    MessageSquare, Plus, Trash2, FolderKanban, Check, ChevronRight, Target, Flag
 } from 'lucide-react';
 import tarefasService from '../../services/tarefasService';
 import notasService from '../../services/notasService';
@@ -9,7 +9,7 @@ import responsaveisService from '../../services/responsaveisService';
 import { useAuth } from '../../contexts/AuthContext';
 import styles from './TarefaDetailModal.module.css';
 
-const TarefaDetailModal = ({ tarefa, onClose, onUpdate }) => {
+const TarefaDetailModal = ({ tarefa, onClose, onUpdate, frenteDescricao, projetoDescricao }) => {
     const { user } = useAuth();
     const [loading, setLoading] = useState(true);
     const [tarefaData, setTarefaData] = useState(null);
@@ -22,6 +22,7 @@ const TarefaDetailModal = ({ tarefa, onClose, onUpdate }) => {
     const [saving, setSaving] = useState(false);
     const [editingNotaId, setEditingNotaId] = useState(null);
     const [editingNotaTexto, setEditingNotaTexto] = useState('');
+    const [notaSearchTerm, setNotaSearchTerm] = useState('');
 
     useEffect(() => {
         if (tarefa?.id) {
@@ -168,7 +169,7 @@ const TarefaDetailModal = ({ tarefa, onClose, onUpdate }) => {
     const isConcluida = tarefaData?.concluida || false;
 
     return (
-        <div className={styles.overlay} onClick={onClose}>
+        <div className={styles.overlay} onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
             <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
                 {/* Header */}
                 <div className={styles.header}>
@@ -298,14 +299,33 @@ const TarefaDetailModal = ({ tarefa, onClose, onUpdate }) => {
                                             </span>
                                         </div>
                                     </div>
-                                    {tarefaData?.objetivo && (
+                                    {/* Hierarchy: Frente > Projeto > Objetivo */}
+                                    {(frenteDescricao || projetoDescricao || tarefaData?.objetivo) && (
                                         <div className={`${styles.detailCard} ${styles.fullWidth}`}>
                                             <FolderKanban size={16} className={styles.detailIcon} />
                                             <div className={styles.detailContent}>
-                                                <span className={styles.detailLabel}>Objetivo</span>
-                                                <span className={styles.detailValue}>
-                                                    {tarefaData.objetivo.codigo} - {tarefaData.objetivo.descricao}
-                                                </span>
+                                                <span className={styles.detailLabel}>Localização</span>
+                                                <div className={styles.detailValue} style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                                    {frenteDescricao && (
+                                                        <>
+                                                            <Target size={12} style={{ opacity: 0.6 }} />
+                                                            <span>{frenteDescricao}</span>
+                                                            <ChevronRight size={12} style={{ opacity: 0.4 }} />
+                                                        </>
+                                                    )}
+                                                    {projetoDescricao && (
+                                                        <>
+                                                            <span>{projetoDescricao}</span>
+                                                            <ChevronRight size={12} style={{ opacity: 0.4 }} />
+                                                        </>
+                                                    )}
+                                                    {tarefaData?.objetivo && (
+                                                        <>
+                                                            <Flag size={12} style={{ opacity: 0.6 }} />
+                                                            <span>{tarefaData.objetivo.descricao}</span>
+                                                        </>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     )}
@@ -331,6 +351,17 @@ const TarefaDetailModal = ({ tarefa, onClose, onUpdate }) => {
                                         <MessageSquare size={18} />
                                         Notas ({notas.length})
                                     </h3>
+                                </div>
+
+                                {/* Search Notas */}
+                                <div className={styles.notaSearchBar}>
+                                    <input
+                                        type="text"
+                                        className={styles.notaSearchInput}
+                                        placeholder="Pesquisar notas..."
+                                        value={notaSearchTerm}
+                                        onChange={(e) => setNotaSearchTerm(e.target.value)}
+                                    />
                                 </div>
 
                                 {/* Add Nota Form */}
@@ -361,58 +392,66 @@ const TarefaDetailModal = ({ tarefa, onClose, onUpdate }) => {
                                         Nenhuma nota registrada
                                     </div>
                                 ) : (
-                                    notas.map(nota => (
-                                        <div key={nota.id} className={styles.notaItem}>
-                                            <div className={styles.notaIconArea}>
-                                                <MessageSquare size={16} className={styles.notaIcon} />
-                                                <span className={styles.notaIconLabel}>Nota</span>
-                                            </div>
-                                            <div className={styles.notaContent}>
-                                                <div className={styles.notaMeta}>
-                                                    <span className={styles.notaAutor}>{nota.usuario}</span>
-                                                    <span className={styles.notaData}>{formatDateTime(nota.data_hora)}</span>
+                                    notas
+                                        .filter(nota => {
+                                            if (!notaSearchTerm.trim()) return true;
+                                            const term = notaSearchTerm.toLowerCase();
+                                            const texto = (nota.texto || '').toLowerCase();
+                                            const usuario = (nota.usuario || '').toLowerCase();
+                                            return texto.includes(term) || usuario.includes(term);
+                                        })
+                                        .map(nota => (
+                                            <div key={nota.id} className={styles.notaItem}>
+                                                <div className={styles.notaIconArea}>
+                                                    <MessageSquare size={16} className={styles.notaIcon} />
+                                                    <span className={styles.notaIconLabel}>Nota</span>
                                                 </div>
-                                                {editingNotaId === nota.id ? (
-                                                    <div className={styles.notaEditForm}>
-                                                        <textarea
-                                                            className={styles.notaEditInput}
-                                                            value={editingNotaTexto}
-                                                            onChange={(e) => setEditingNotaTexto(e.target.value)}
-                                                            rows={2}
-                                                        />
-                                                        <div className={styles.notaEditActions}>
-                                                            <button className={styles.notaCancelBtn} onClick={handleCancelNotaEdit}>
-                                                                Cancelar
+                                                <div className={styles.notaContent}>
+                                                    <div className={styles.notaMeta}>
+                                                        <span className={styles.notaAutor}>{nota.usuario}</span>
+                                                        <span className={styles.notaData}>{formatDateTime(nota.data_hora)}</span>
+                                                    </div>
+                                                    {editingNotaId === nota.id ? (
+                                                        <div className={styles.notaEditForm}>
+                                                            <textarea
+                                                                className={styles.notaEditInput}
+                                                                value={editingNotaTexto}
+                                                                onChange={(e) => setEditingNotaTexto(e.target.value)}
+                                                                rows={2}
+                                                            />
+                                                            <div className={styles.notaEditActions}>
+                                                                <button className={styles.notaCancelBtn} onClick={handleCancelNotaEdit}>
+                                                                    Cancelar
+                                                                </button>
+                                                                <button className={styles.notaSaveBtn} onClick={handleSaveNotaEdit}>
+                                                                    <Save size={14} /> Salvar
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <p className={styles.notaTexto}>{nota.texto}</p>
+                                                    )}
+                                                    {editingNotaId !== nota.id && (
+                                                        <div className={styles.notaActions}>
+                                                            <button
+                                                                className={styles.notaEditBtn}
+                                                                onClick={() => handleEditNota(nota)}
+                                                                title="Editar nota"
+                                                            >
+                                                                <Pencil size={12} /> Editar
                                                             </button>
-                                                            <button className={styles.notaSaveBtn} onClick={handleSaveNotaEdit}>
-                                                                <Save size={14} /> Salvar
+                                                            <button
+                                                                className={styles.notaDeleteBtn}
+                                                                onClick={() => handleDeleteNota(nota.id)}
+                                                                title="Excluir nota"
+                                                            >
+                                                                <Trash2 size={12} /> Excluir
                                                             </button>
                                                         </div>
-                                                    </div>
-                                                ) : (
-                                                    <p className={styles.notaTexto}>{nota.texto}</p>
-                                                )}
-                                                {editingNotaId !== nota.id && (
-                                                    <div className={styles.notaActions}>
-                                                        <button
-                                                            className={styles.notaEditBtn}
-                                                            onClick={() => handleEditNota(nota)}
-                                                            title="Editar nota"
-                                                        >
-                                                            <Pencil size={12} /> Editar
-                                                        </button>
-                                                        <button
-                                                            className={styles.notaDeleteBtn}
-                                                            onClick={() => handleDeleteNota(nota.id)}
-                                                            title="Excluir nota"
-                                                        >
-                                                            <Trash2 size={12} /> Excluir
-                                                        </button>
-                                                    </div>
-                                                )}
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))
+                                        ))
                                 )}
                             </div>
                         </>
@@ -423,16 +462,18 @@ const TarefaDetailModal = ({ tarefa, onClose, onUpdate }) => {
                 <div className={styles.footer}>
                     {!isEditing ? (
                         <div className={styles.footerActions}>
+                            <div className={styles.footerLeft}>
+                                <button className={styles.editBtnSimple} onClick={() => setIsEditing(true)}>
+                                    <Pencil size={16} />
+                                    Editar
+                                </button>
+                                <button className={styles.deleteBtnSimple} onClick={handleDelete}>
+                                    <Trash2 size={16} />
+                                    Excluir
+                                </button>
+                            </div>
                             <button className={styles.footerCloseBtn} onClick={onClose}>
                                 Fechar
-                            </button>
-                            <button className={styles.editBtnSimple} onClick={() => setIsEditing(true)}>
-                                <Pencil size={16} />
-                                Editar
-                            </button>
-                            <button className={styles.deleteBtnSimple} onClick={handleDelete}>
-                                <Trash2 size={16} />
-                                Excluir
                             </button>
                         </div>
                     ) : (

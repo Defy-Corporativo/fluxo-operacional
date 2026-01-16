@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     Plus, ChevronRight, ChevronLeft, ChevronDown, Pencil, Trash2, X, Save, Search,
-    Target, FolderKanban, Flag, CheckSquare,
+    Target, FolderKanban, Flag, CheckSquare, Filter,
     Calendar, User, MessageSquare, StickyNote
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -27,6 +27,13 @@ const FrentesEstrategicas = () => {
 
     // Selected Frente for internal navigation
     const [selectedFrente, setSelectedFrente] = useState(null);
+
+    // View mode: 'frente' or 'projeto'
+    const [viewMode, setViewMode] = useState('frente');
+
+    // Global search and filter (on main list)
+    const [globalSearchTerm, setGlobalSearchTerm] = useState('');
+    const [globalPendingFilter, setGlobalPendingFilter] = useState(false);
 
     // Search in frente view
     const [frenteSearchTerm, setFrenteSearchTerm] = useState('');
@@ -66,6 +73,7 @@ const FrentesEstrategicas = () => {
     // Filtros de tarefas no modal de objetivo
     const [tarefaFilterPendingOnly, setTarefaFilterPendingOnly] = useState(false);
     const [tarefaFilterDate, setTarefaFilterDate] = useState('');
+    const [tarefaSearchTerm, setTarefaSearchTerm] = useState('');
     const [savingObjetivo, setSavingObjetivo] = useState(false);
 
     // Load data
@@ -135,6 +143,63 @@ const FrentesEstrategicas = () => {
     // Toggle expansions
     const toggleFrente = (frenteId) => {
         setExpandedFrentes(prev => ({ ...prev, [frenteId]: !prev[frenteId] }));
+    };
+
+    // Handle selecting a frente - preload all objectives and tasks for filtering
+    const handleSelectFrente = async (frente) => {
+        setSelectedFrente(frente);
+
+        // Preload objectives for all projects in this frente
+        if (frente.projetos && frente.projetos.length > 0) {
+            for (const projeto of frente.projetos) {
+                // Load objectives tree if not already loaded
+                if (!objetivosTree[projeto.id]) {
+                    try {
+                        const tree = await objetivosService.getTree(projeto.id);
+                        setObjetivosTree(prev => ({ ...prev, [projeto.id]: tree }));
+
+                        // Load tasks for all objectives in this project
+                        const loadAllTarefas = async (objetivos) => {
+                            for (const obj of objetivos) {
+                                if (!tarefasMap[obj.id]) {
+                                    try {
+                                        const tarefas = await tarefasService.getByObjetivo(obj.id);
+                                        setTarefasMap(prev => ({ ...prev, [obj.id]: tarefas }));
+                                    } catch (err) {
+                                        console.error('Erro ao carregar tarefas:', err);
+                                    }
+                                }
+                                // Load tasks for children recursively
+                                if (obj.children && obj.children.length > 0) {
+                                    await loadAllTarefas(obj.children);
+                                }
+                            }
+                        };
+                        await loadAllTarefas(tree);
+                    } catch (error) {
+                        console.error('Erro ao carregar objetivos:', error);
+                    }
+                } else {
+                    // Objectives already loaded, just load tasks
+                    const loadAllTarefas = async (objetivos) => {
+                        for (const obj of objetivos) {
+                            if (!tarefasMap[obj.id]) {
+                                try {
+                                    const tarefas = await tarefasService.getByObjetivo(obj.id);
+                                    setTarefasMap(prev => ({ ...prev, [obj.id]: tarefas }));
+                                } catch (err) {
+                                    console.error('Erro ao carregar tarefas:', err);
+                                }
+                            }
+                            if (obj.children && obj.children.length > 0) {
+                                await loadAllTarefas(obj.children);
+                            }
+                        }
+                    };
+                    await loadAllTarefas(objetivosTree[projeto.id]);
+                }
+            }
+        }
     };
 
     const toggleProjeto = async (projetoId) => {
@@ -627,8 +692,13 @@ const FrentesEstrategicas = () => {
                         <ChevronLeft size={24} />
                     </button>
                 )}
-                <h1 className="page-title" style={{ flex: 1 }}>
-                    {selectedFrente ? `${selectedFrente.codigo} - ${selectedFrente.descricao}` : 'Frentes Estratégicas'}
+                <h1 className="page-title" style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {selectedFrente ? (
+                        <>
+                            <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: '500' }}>{selectedFrente.codigo}</span>
+                            {selectedFrente.descricao}
+                        </>
+                    ) : null}
                 </h1>
                 {selectedFrente && (
                     <button
@@ -796,33 +866,173 @@ const FrentesEstrategicas = () => {
                     )}
                 </div>
             ) : (
-                // ========== LISTA DE FRENTES ESTRATÉGICAS ==========
-                <div className={styles.treeContainer}>
-                    {frentes.map(frente => (
-                        <div key={frente.id} className={styles.frenteCard}>
-                            <div
-                                className={styles.frenteHeader}
-                                onClick={() => setSelectedFrente(frente)}
-                            >
-                                <div className={styles.frenteInfo}>
-                                    <span className={styles.frenteCodigo}>{frente.codigo}</span>
-                                    <span className={styles.frenteDescricao}>{frente.descricao}</span>
-                                </div>
-                                <div className={styles.frenteActions}>
-                                    <ChevronRight
-                                        size={20}
-                                        className={styles.expandIcon}
-                                    />
-                                </div>
+                // ========== LISTA PRINCIPAL (FRENTES OU PROJETOS) ==========
+                <>
+                    {/* View Mode Toggle + Global Search + Pending Filter */}
+                    <div className={styles.searchFilterRow}>
+                        <div className={styles.viewToggle}>
+                            <span className={styles.viewLabel}>
+                                <Filter size={16} /> Visualizar por:
+                            </span>
+                            <div className={styles.toggleButtons}>
+                                <button
+                                    className={`${styles.toggleBtn} ${viewMode === 'frente' ? styles.active : ''}`}
+                                    onClick={() => setViewMode('frente')}
+                                >
+                                    <Target size={16} />
+                                    Frente
+                                </button>
+                                <button
+                                    className={`${styles.toggleBtn} ${viewMode === 'projeto' ? styles.active : ''}`}
+                                    onClick={() => setViewMode('projeto')}
+                                >
+                                    <FolderKanban size={16} />
+                                    Projeto
+                                </button>
                             </div>
                         </div>
-                    ))}
-                </div>
+                    </div>
+                    <div className={styles.searchFilterRow}>
+                        <div className={styles.searchBar}>
+                            <Search size={18} className={styles.searchIcon} />
+                            <input
+                                type="text"
+                                className={styles.searchInput}
+                                placeholder={viewMode === 'frente' ? "Pesquisar frentes, projetos ou objetivos..." : "Pesquisar projetos ou objetivos..."}
+                                value={globalSearchTerm}
+                                onChange={(e) => setGlobalSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <div className={styles.filterControls}>
+                            <button
+                                className={`${styles.filterToggle} ${globalPendingFilter ? styles.active : ''}`}
+                                onClick={() => setGlobalPendingFilter(!globalPendingFilter)}
+                                title="Mostrar apenas itens com tarefas pendentes"
+                            >
+                                <CheckSquare size={16} />
+                                Pendentes
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className={styles.treeContainer}>
+                        {viewMode === 'frente' ? (
+                            // ========== LISTA DE FRENTES ESTRATÉGICAS ==========
+                            frentes
+                                .filter(frente => {
+                                    // Global search filter
+                                    if (globalSearchTerm.trim()) {
+                                        const term = globalSearchTerm.toLowerCase();
+                                        const matchFrente = frente.descricao.toLowerCase().includes(term) || frente.codigo.toLowerCase().includes(term);
+                                        const matchProjeto = frente.projetos?.some(p =>
+                                            p.descricao.toLowerCase().includes(term) || p.codigo.toLowerCase().includes(term)
+                                        );
+                                        if (!matchFrente && !matchProjeto) return false;
+                                    }
+                                    // Global pending filter
+                                    if (globalPendingFilter) {
+                                        // Check if this frente has any pending tasks
+                                        const hasPending = frente.projetos?.some(projeto => {
+                                            const tree = objetivosTree[projeto.id] || [];
+                                            const checkObjetivos = (objs) => {
+                                                return objs.some(obj => {
+                                                    const tarefas = tarefasMap[obj.id] || [];
+                                                    const hasPendingTarefa = tarefas.some(t => !t.concluida);
+                                                    if (hasPendingTarefa) return true;
+                                                    if (obj.children) return checkObjetivos(obj.children);
+                                                    return false;
+                                                });
+                                            };
+                                            return checkObjetivos(tree);
+                                        });
+                                        if (!hasPending) return false;
+                                    }
+                                    return true;
+                                })
+                                .map(frente => (
+                                    <div key={frente.id} className={styles.frenteCard}>
+                                        <div
+                                            className={styles.frenteHeader}
+                                            onClick={() => handleSelectFrente(frente)}
+                                        >
+                                            <div className={styles.frenteInfo}>
+                                                <span className={styles.frenteCodigo}>{frente.codigo}</span>
+                                                <span className={styles.frenteDescricao}>{frente.descricao}</span>
+                                            </div>
+                                            <div className={styles.frenteActions}>
+                                                <ChevronRight
+                                                    size={20}
+                                                    className={styles.expandIcon}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                        ) : (
+                            // ========== LISTA DE PROJETOS ==========
+                            frentes
+                                .flatMap(frente => (frente.projetos || []).map(projeto => ({ ...projeto, frente })))
+                                .filter(projeto => {
+                                    // Global search filter
+                                    if (globalSearchTerm.trim()) {
+                                        const term = globalSearchTerm.toLowerCase();
+                                        const matchProjeto = projeto.descricao.toLowerCase().includes(term) || projeto.codigo.toLowerCase().includes(term);
+                                        const matchFrente = projeto.frente.descricao.toLowerCase().includes(term) || projeto.frente.codigo.toLowerCase().includes(term);
+                                        if (!matchProjeto && !matchFrente) return false;
+                                    }
+                                    // Global pending filter
+                                    if (globalPendingFilter) {
+                                        const tree = objetivosTree[projeto.id] || [];
+                                        const checkObjetivos = (objs) => {
+                                            return objs.some(obj => {
+                                                const tarefas = tarefasMap[obj.id] || [];
+                                                const hasPendingTarefa = tarefas.some(t => !t.concluida);
+                                                if (hasPendingTarefa) return true;
+                                                if (obj.children) return checkObjetivos(obj.children);
+                                                return false;
+                                            });
+                                        };
+                                        if (!checkObjetivos(tree)) return false;
+                                    }
+                                    return true;
+                                })
+                                .map(projeto => (
+                                    <div key={projeto.id} className={styles.projetoCard}>
+                                        <div
+                                            className={styles.projetoHeader}
+                                            onClick={() => {
+                                                // Navigate to the frente and open this project
+                                                setSelectedFrente(projeto.frente);
+                                                setExpandedProjetos(prev => ({ ...prev, [projeto.id]: true }));
+                                                if (!objetivosTree[projeto.id]) {
+                                                    loadObjetivos(projeto.id);
+                                                }
+                                            }}
+                                        >
+                                            <div className={styles.projetoInfo}>
+                                                <span className={styles.projetoCodigo}>{projeto.codigo}</span>
+                                                <span className={styles.projetoDescricao}>{projeto.descricao}</span>
+                                            </div>
+                                            <div className={styles.projetoMeta}>
+                                                <span className={styles.frenteTag}>
+                                                    <Target size={12} />
+                                                    {projeto.frente.codigo}
+                                                </span>
+                                            </div>
+                                            <div className={styles.projetoActions}>
+                                                <ChevronRight size={20} className={styles.expandIcon} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                        )}
+                    </div>
+                </>
             )}
 
             {/* Modal */}
             {showModal && (
-                <div className={styles.modalOverlay} onClick={closeModal}>
+                <div className={styles.modalOverlay} onMouseDown={(e) => { if (e.target === e.currentTarget) closeModal(); }}>
                     <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
                         {/* Modal Header */}
                         <div className={styles.modalHeader}>
@@ -1024,7 +1234,7 @@ const FrentesEstrategicas = () => {
 
             {/* Notas Modal */}
             {showNotasFor && (
-                <div className={styles.modalOverlay} onClick={closeNotas}>
+                <div className={styles.modalOverlay} onMouseDown={(e) => { if (e.target === e.currentTarget) closeNotas(); }}>
                     <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
                         <div className={styles.modalHeader}>
                             <h3 className={styles.modalTitle}>
@@ -1087,15 +1297,25 @@ const FrentesEstrategicas = () => {
 
             {/* Objetivo Detail Modal */}
             {selectedObjetivo && (
-                <div className={styles.modalOverlay} onClick={() => { setSelectedObjetivo(null); setShowNewTarefaForm(false); setTarefaFilterPendingOnly(false); setTarefaFilterDate(''); }}>
+                <div className={styles.modalOverlay} onMouseDown={(e) => { if (e.target === e.currentTarget) { setSelectedObjetivo(null); setShowNewTarefaForm(false); setTarefaFilterPendingOnly(false); setTarefaFilterDate(''); setTarefaSearchTerm(''); } }}>
                     <div className={`${styles.modal} ${styles.modalLarge}`} onClick={(e) => e.stopPropagation()}>
                         <div className={styles.modalHeader}>
-                            <h3 className={styles.modalTitle}>
-                                <Flag size={20} style={{ marginRight: '8px' }} />
-                                {editingObjetivo ? 'Editar Objetivo' : `${selectedObjetivo.codigo} - ${selectedObjetivo.descricao}`}
-                            </h3>
+                            <div>
+                                {/* Hierarchy breadcrumb */}
+                                {selectedFrente && selectedProjetoId && (
+                                    <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <span>{selectedFrente.descricao}</span>
+                                        <ChevronRight size={12} />
+                                        <span>{selectedFrente.projetos?.find(p => p.id === selectedProjetoId)?.descricao || ''}</span>
+                                    </div>
+                                )}
+                                <h3 className={styles.modalTitle} style={{ margin: 0 }}>
+                                    <Flag size={20} style={{ marginRight: '8px' }} />
+                                    {editingObjetivo ? 'Editar Objetivo' : (selectedObjetivo.titulo || selectedObjetivo.descricao)}
+                                </h3>
+                            </div>
                             <div className={styles.headerButtons}>
-                                <button className={styles.modalClose} onClick={() => { setSelectedObjetivo(null); setShowNewTarefaForm(false); setEditingObjetivo(false); setTarefaFilterPendingOnly(false); setTarefaFilterDate(''); }}>
+                                <button className={styles.modalClose} onClick={() => { setSelectedObjetivo(null); setShowNewTarefaForm(false); setEditingObjetivo(false); setTarefaFilterPendingOnly(false); setTarefaFilterDate(''); setTarefaSearchTerm(''); }}>
                                     <X size={20} />
                                 </button>
                             </div>
@@ -1200,18 +1420,49 @@ const FrentesEstrategicas = () => {
                                     ) : (
                                         // Visualização do objetivo e lista de tarefas
                                         <>
-                                            {/* Objetivo Info */}
-                                            <div className={styles.objetivoDetailInfo}>
-                                                {selectedObjetivo.responsavel && (
-                                                    <span className={styles.objetivoMetaItem}>
-                                                        <User size={14} /> <strong>Responsável:</strong> {selectedObjetivo.responsavel}
-                                                    </span>
-                                                )}
-                                                {selectedObjetivo.data_expectativa && (
-                                                    <span className={styles.objetivoMetaItem}>
-                                                        <Calendar size={14} /> <strong>Expectativa:</strong> {formatDate(selectedObjetivo.data_expectativa)}
-                                                    </span>
-                                                )}
+                                            {/* Objetivo Info - Cards estilo tarefa */}
+                                            <div className={styles.objetivoDetailCards}>
+                                                {/* Localização Card */}
+                                                <div className={styles.detailCard} style={{ gridColumn: '1 / -1' }}>
+                                                    <FolderKanban size={16} className={styles.detailCardIcon} />
+                                                    <div className={styles.detailCardContent}>
+                                                        <span className={styles.detailCardLabel}>Localização</span>
+                                                        <div className={styles.detailCardValue} style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                                            {selectedFrente && (
+                                                                <>
+                                                                    <Target size={12} style={{ opacity: 0.6 }} />
+                                                                    <span>{selectedFrente.descricao}</span>
+                                                                    <ChevronRight size={12} style={{ opacity: 0.4 }} />
+                                                                </>
+                                                            )}
+                                                            {selectedProjetoId && selectedFrente?.projetos?.find(p => p.id === selectedProjetoId) && (
+                                                                <span>{selectedFrente.projetos.find(p => p.id === selectedProjetoId).descricao}</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Responsável Card */}
+                                                <div className={styles.detailCard}>
+                                                    <User size={16} className={styles.detailCardIcon} />
+                                                    <div className={styles.detailCardContent}>
+                                                        <span className={styles.detailCardLabel}>Responsável</span>
+                                                        <span className={styles.detailCardValue}>
+                                                            {selectedObjetivo.responsavel || 'Não definido'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Expectativa Card */}
+                                                <div className={styles.detailCard}>
+                                                    <Calendar size={16} className={styles.detailCardIcon} />
+                                                    <div className={styles.detailCardContent}>
+                                                        <span className={styles.detailCardLabel}>Expectativa</span>
+                                                        <span className={styles.detailCardValue}>
+                                                            {selectedObjetivo.data_expectativa ? formatDate(selectedObjetivo.data_expectativa) : 'Não definida'}
+                                                        </span>
+                                                    </div>
+                                                </div>
                                             </div>
 
                                             {/* Sub-objetivos Section (antes das tarefas) */}
@@ -1260,6 +1511,16 @@ const FrentesEstrategicas = () => {
 
                                                 {/* Filtros de Tarefas */}
                                                 <div className={styles.tarefasFilterRow}>
+                                                    <div className={styles.searchBarSmall}>
+                                                        <Search size={16} className={styles.searchIcon} />
+                                                        <input
+                                                            type="text"
+                                                            className={styles.searchInputSmall}
+                                                            placeholder="Pesquisar tarefas..."
+                                                            value={tarefaSearchTerm}
+                                                            onChange={(e) => setTarefaSearchTerm(e.target.value)}
+                                                        />
+                                                    </div>
                                                     <button
                                                         className={`${styles.filterToggle} ${tarefaFilterPendingOnly ? styles.active : ''}`}
                                                         onClick={() => setTarefaFilterPendingOnly(!tarefaFilterPendingOnly)}
@@ -1285,6 +1546,16 @@ const FrentesEstrategicas = () => {
                                                     <div className={styles.tarefasListDetail}>
                                                         {tarefasMap[selectedObjetivo.id]
                                                             .filter(tarefa => {
+                                                                // Filtro de pesquisa
+                                                                if (tarefaSearchTerm.trim()) {
+                                                                    const term = tarefaSearchTerm.toLowerCase();
+                                                                    const titulo = (tarefa.titulo || '').toLowerCase();
+                                                                    const descricao = (tarefa.descricao || '').toLowerCase();
+                                                                    const responsavel = (tarefa.responsavel || '').toLowerCase();
+                                                                    if (!titulo.includes(term) && !descricao.includes(term) && !responsavel.includes(term)) {
+                                                                        return false;
+                                                                    }
+                                                                }
                                                                 // Filtro de pendentes
                                                                 if (tarefaFilterPendingOnly && tarefa.concluida) {
                                                                     return false;
@@ -1349,14 +1620,8 @@ const FrentesEstrategicas = () => {
                                         </button>
                                     </>
                                 ) : (
-                                    // Botões padrão: Fechar e Editar
+                                    // Botões padrão: Editar e Fechar (Editar à esquerda, Fechar à direita)
                                     <>
-                                        <button
-                                            className={styles.footerCloseBtn}
-                                            onClick={() => { setSelectedObjetivo(null); setShowNewTarefaForm(false); setTarefaFilterPendingOnly(false); setTarefaFilterDate(''); }}
-                                        >
-                                            Fechar
-                                        </button>
                                         {!editingObjetivo && (
                                             <button
                                                 className={styles.primaryBtn}
@@ -1364,14 +1629,23 @@ const FrentesEstrategicas = () => {
                                                     const objToEdit = { ...selectedObjetivo, projeto_id: selectedProjetoId };
                                                     setSelectedObjetivo(null);
                                                     setShowNewTarefaForm(false);
+                                                    setTarefaFilterPendingOnly(false);
+                                                    setTarefaFilterDate('');
+                                                    setTarefaSearchTerm('');
                                                     openModal('objetivo', objToEdit);
                                                 }}
-                                                style={{ marginLeft: '8px' }}
                                             >
                                                 <Pencil size={16} style={{ marginRight: '4px' }} />
                                                 Editar
                                             </button>
                                         )}
+                                        <button
+                                            className={styles.footerCloseBtn}
+                                            onClick={() => { setSelectedObjetivo(null); setShowNewTarefaForm(false); setTarefaFilterPendingOnly(false); setTarefaFilterDate(''); setTarefaSearchTerm(''); }}
+                                            style={{ marginLeft: '8px' }}
+                                        >
+                                            Fechar
+                                        </button>
                                     </>
                                 )}
                             </div>
@@ -1386,6 +1660,8 @@ const FrentesEstrategicas = () => {
                     tarefa={selectedTarefa}
                     onClose={handleCloseTarefaModal}
                     onUpdate={handleTarefaUpdate}
+                    frenteDescricao={selectedFrente?.descricao}
+                    projetoDescricao={selectedFrente?.projetos?.find(p => p.id === selectedProjetoId)?.descricao}
                 />
             )}
         </div >
