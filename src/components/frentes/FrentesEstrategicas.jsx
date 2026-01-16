@@ -31,6 +31,10 @@ const FrentesEstrategicas = () => {
     // Search in frente view
     const [frenteSearchTerm, setFrenteSearchTerm] = useState('');
 
+    // Filters in frente view
+    const [filterPendingOnly, setFilterPendingOnly] = useState(false);
+    const [filterDate, setFilterDate] = useState('');
+
     // Modal states
     const [showModal, setShowModal] = useState(false);
     const [modalType, setModalType] = useState('');
@@ -71,6 +75,16 @@ const FrentesEstrategicas = () => {
             setLoading(true);
             const data = await frentesService.getAll();
             setFrentes(data || []);
+            // Update selectedFrente with refreshed data
+            if (selectedFrente) {
+                const updatedFrente = (data || []).find(f => f.id === selectedFrente.id);
+                if (updatedFrente) {
+                    setSelectedFrente(updatedFrente);
+                } else {
+                    // Frente was deleted
+                    setSelectedFrente(null);
+                }
+            }
         } catch (error) {
             console.error('Erro ao carregar frentes:', error);
         } finally {
@@ -464,6 +478,17 @@ const FrentesEstrategicas = () => {
                                     <Calendar size={12} /> {formatDate(objetivo.data_expectativa)}
                                 </span>
                             )}
+                            {/* Task counts */}
+                            {tarefas.length > 0 && (() => {
+                                const completed = tarefas.filter(t => t.concluida).length;
+                                const hasPending = completed < tarefas.length;
+                                return (
+                                    <span className={`${styles.taskCountBadge} ${hasPending ? styles.pending : ''}`}>
+                                        <CheckSquare size={12} />
+                                        {completed}/{tarefas.length}
+                                    </span>
+                                );
+                            })()}
                         </div>
                     </div>
 
@@ -622,16 +647,35 @@ const FrentesEstrategicas = () => {
             ) : selectedFrente ? (
                 // ========== VISUALIZAÇÃO INTERNA DA FRENTE ==========
                 <div className={styles.treeContainer}>
-                    {/* Search bar for frente view */}
-                    <div className={styles.searchBar}>
-                        <Search size={18} className={styles.searchIcon} />
-                        <input
-                            type="text"
-                            className={styles.searchInput}
-                            placeholder="Pesquisar por projeto ou objetivo..."
-                            value={frenteSearchTerm}
-                            onChange={(e) => setFrenteSearchTerm(e.target.value)}
-                        />
+                    {/* Search and Filters */}
+                    <div className={styles.searchFilterRow}>
+                        <div className={styles.searchBar}>
+                            <Search size={18} className={styles.searchIcon} />
+                            <input
+                                type="text"
+                                className={styles.searchInput}
+                                placeholder="Pesquisar por projeto ou objetivo..."
+                                value={frenteSearchTerm}
+                                onChange={(e) => setFrenteSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <div className={styles.filterControls}>
+                            <button
+                                className={`${styles.filterToggle} ${filterPendingOnly ? styles.active : ''}`}
+                                onClick={() => setFilterPendingOnly(!filterPendingOnly)}
+                                title="Mostrar apenas com tarefas pendentes"
+                            >
+                                <CheckSquare size={16} />
+                                Pendentes
+                            </button>
+                            <input
+                                type="date"
+                                className={styles.filterDateInput}
+                                value={filterDate}
+                                onChange={(e) => setFilterDate(e.target.value)}
+                                title="Filtrar por data de expectativa"
+                            />
+                        </div>
                     </div>
 
                     {(!selectedFrente.projetos || selectedFrente.projetos.length === 0) ? (
@@ -651,18 +695,42 @@ const FrentesEstrategicas = () => {
                     ) : (
                         selectedFrente.projetos
                             .filter(projeto => {
-                                if (!frenteSearchTerm.trim()) return true;
-                                const term = frenteSearchTerm.toLowerCase();
-                                // Match project
-                                if (projeto.codigo?.toLowerCase().includes(term)) return true;
-                                if (projeto.descricao?.toLowerCase().includes(term)) return true;
-                                // Match objectives in project
-                                const projetoObjetivos = objetivosTree[projeto.id] || [];
-                                return projetoObjetivos.some(obj =>
-                                    obj.titulo?.toLowerCase().includes(term) ||
-                                    obj.descricao?.toLowerCase().includes(term) ||
-                                    obj.codigo?.toLowerCase().includes(term)
-                                );
+                                // Search filter
+                                if (frenteSearchTerm.trim()) {
+                                    const term = frenteSearchTerm.toLowerCase();
+                                    const matchesProject = projeto.codigo?.toLowerCase().includes(term) ||
+                                        projeto.descricao?.toLowerCase().includes(term);
+                                    const projetoObjetivos = objetivosTree[projeto.id] || [];
+                                    const matchesObjective = projetoObjetivos.some(obj =>
+                                        obj.titulo?.toLowerCase().includes(term) ||
+                                        obj.descricao?.toLowerCase().includes(term) ||
+                                        obj.codigo?.toLowerCase().includes(term)
+                                    );
+                                    if (!matchesProject && !matchesObjective) return false;
+                                }
+
+                                // Pending tasks filter
+                                if (filterPendingOnly) {
+                                    const projetoObjetivos = objetivosTree[projeto.id] || [];
+                                    const hasPendingTasks = projetoObjetivos.some(obj => {
+                                        const objTarefas = tarefasMap[obj.id] || [];
+                                        return objTarefas.some(t => !t.concluida);
+                                    });
+                                    if (!hasPendingTasks) return false;
+                                }
+
+                                // Date filter
+                                if (filterDate) {
+                                    const projetoObjetivos = objetivosTree[projeto.id] || [];
+                                    const matchesDate = projetoObjetivos.some(obj => {
+                                        if (obj.data_expectativa === filterDate) return true;
+                                        const objTarefas = tarefasMap[obj.id] || [];
+                                        return objTarefas.some(t => t.data_expectativa === filterDate);
+                                    });
+                                    if (!matchesDate) return false;
+                                }
+
+                                return true;
                             })
                             .map(projeto => (
                                 <div key={projeto.id} className={styles.projetoCard}>
