@@ -31,8 +31,8 @@
 
 @media (min-width: 768px) {
     .modal {
-        max-width: 700px;
-        max-height: 85vh;
+        max-width: 90vw;
+        max-height: 90vh;
         border-radius: var(--border-radius-lg);
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
     }
@@ -40,7 +40,7 @@
 
 @media (min-width: 1024px) {
     .modal {
-        max-width: 800px;
+        max-width: 90vw;
         max-height: 90vh;
     }
 }
@@ -744,6 +744,72 @@
 
 .footerConcluirBtn.reabrir {
     background: var(--color-warning, #d97706);
+}
+
+/* Status Row */
+.statusRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: var(--spacing-sm);
+}
+
+.concluirBtn {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-md);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    background: var(--color-success, #059669);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.concluirBtn:hover {
+    background: var(--color-success-dark, #047857);
+}
+
+.concluirBtn.reabrir {
+    background: var(--color-warning, #d97706);
+}
+
+.footerActions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    width: 100%;
+}
+
+.editBtnSimple,
+.deleteBtnSimple {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-md);
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.editBtnSimple:hover {
+    background: var(--bg-hover);
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.deleteBtnSimple:hover {
+    background: var(--color-danger-light, #fee2e2);
+    color: var(--color-danger, #dc2626);
+    border-color: var(--color-danger, #dc2626);
 }
 
 .footerConcluirBtn.reabrir:hover {

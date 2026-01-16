@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
     Users, FolderKanban, CheckSquare, Calendar, User,
-    ChevronRight, ChevronDown, Filter
+    ChevronRight, ChevronDown, Filter, Search
 } from 'lucide-react';
 import tarefasService from '../../services/tarefasService';
 import projetosService from '../../services/projetosService';
@@ -15,6 +15,7 @@ const TarefasView = () => {
     const [viewMode, setViewMode] = useState('responsavel'); // 'responsavel' | 'projeto'
     const [expandedGroups, setExpandedGroups] = useState({});
     const [selectedTarefa, setSelectedTarefa] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         loadData();
@@ -44,12 +45,27 @@ const TarefasView = () => {
         }
     };
 
+    // Filtered tarefas based on search term
+    const filteredTarefas = useMemo(() => {
+        if (!searchTerm.trim()) return tarefas;
+        const term = searchTerm.toLowerCase();
+        return tarefas.filter(tarefa => {
+            const titulo = (tarefa.titulo || tarefa.descricao || '').toLowerCase();
+            const responsavel = (tarefa.responsavel || '').toLowerCase();
+            const objetivoCodigo = (tarefa.objetivo?.codigo || '').toLowerCase();
+            const projeto = projetos.find(p => p.id === tarefa.objetivo?.projeto_id);
+            const projetoNome = projeto ? (projeto.codigo + ' ' + projeto.descricao).toLowerCase() : '';
+            return titulo.includes(term) || responsavel.includes(term) || objetivoCodigo.includes(term) || projetoNome.includes(term);
+        });
+    }, [tarefas, projetos, searchTerm]);
+
     // Group tarefas by responsavel or projeto
     const groupedTarefas = useMemo(() => {
+        const tarefasToGroup = filteredTarefas;
         if (viewMode === 'responsavel') {
             // Group by responsavel, show projeto info
             const groups = {};
-            tarefas.forEach(tarefa => {
+            tarefasToGroup.forEach(tarefa => {
                 const key = tarefa.responsavel || 'Sem Responsável';
                 if (!groups[key]) {
                     groups[key] = {
@@ -63,7 +79,7 @@ const TarefasView = () => {
         } else {
             // Group by projeto, show responsavel info
             const groups = {};
-            tarefas.forEach(tarefa => {
+            tarefasToGroup.forEach(tarefa => {
                 const projetoId = tarefa.objetivo?.projeto_id || 'sem-projeto';
                 const projeto = projetos.find(p => p.id === tarefa.objetivo?.projeto_id);
                 const key = projetoId;
@@ -78,7 +94,7 @@ const TarefasView = () => {
             });
             return Object.values(groups).sort((a, b) => a.name.localeCompare(b.name));
         }
-    }, [tarefas, projetos, viewMode]);
+    }, [filteredTarefas, projetos, viewMode]);
 
     const toggleGroup = (key) => {
         setExpandedGroups(prev => ({
@@ -126,6 +142,18 @@ const TarefasView = () => {
         <div className="container">
             <div className="page-header">
                 <h1 className="page-title">Tarefas</h1>
+            </div>
+
+            {/* Search Bar */}
+            <div className={styles.searchBar}>
+                <Search size={18} className={styles.searchIcon} />
+                <input
+                    type="text"
+                    className={styles.searchInput}
+                    placeholder="Pesquisar por projeto, tarefa ou responsável..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
             </div>
 
             {/* View Mode Toggle */}

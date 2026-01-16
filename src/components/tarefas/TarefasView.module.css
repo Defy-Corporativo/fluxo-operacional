@@ -8,6 +8,36 @@
     color: var(--text-secondary);
 }
 
+/* Search Bar */
+.searchBar {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color-light);
+    border-radius: var(--border-radius-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.searchIcon {
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+}
+
+.searchInput {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: var(--font-size-md);
+    color: var(--text-primary);
+    outline: none;
+}
+
+.searchInput::placeholder {
+    color: var(--text-tertiary);
+}
+
 /* View Toggle */
 .viewToggle {
     display: flex;

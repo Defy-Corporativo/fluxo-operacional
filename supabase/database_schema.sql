@@ -48,6 +48,7 @@ CREATE INDEX IF NOT EXISTS flop_idx_projetos_frente ON flop_projetos(frente_id);
 CREATE TABLE IF NOT EXISTS flop_objetivos (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     codigo VARCHAR(10) NOT NULL UNIQUE, -- Formato OB001
+    titulo VARCHAR(200) NOT NULL,
     descricao VARCHAR(500) NOT NULL,
     responsavel VARCHAR(255),
     data_expectativa DATE,

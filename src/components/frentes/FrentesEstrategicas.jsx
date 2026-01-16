@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Plus, ChevronRight, ChevronLeft, Pencil, Trash2, X, Save,
+    Plus, ChevronRight, ChevronLeft, ChevronDown, Pencil, Trash2, X, Save, Search,
     Target, FolderKanban, Flag, CheckSquare,
     Calendar, User, MessageSquare, StickyNote
 } from 'lucide-react';
@@ -10,18 +10,26 @@ import projetosService from '../../services/projetosService';
 import objetivosService from '../../services/objetivosService';
 import tarefasService from '../../services/tarefasService';
 import notasService from '../../services/notasService';
+import responsaveisService from '../../services/responsaveisService';
 import TarefaDetailModal from '../tarefas/TarefaDetailModal';
 import styles from './FrentesEstrategicas.module.css';
 
 const FrentesEstrategicas = () => {
     const { user } = useAuth();
     const [frentes, setFrentes] = useState([]);
+    const [responsaveis, setResponsaveis] = useState([]);
     const [loading, setLoading] = useState(true);
     const [expandedFrentes, setExpandedFrentes] = useState({});
     const [expandedProjetos, setExpandedProjetos] = useState({});
     const [expandedObjetivos, setExpandedObjetivos] = useState({});
     const [objetivosTree, setObjetivosTree] = useState({});
     const [tarefasMap, setTarefasMap] = useState({});
+
+    // Selected Frente for internal navigation
+    const [selectedFrente, setSelectedFrente] = useState(null);
+
+    // Search in frente view
+    const [frenteSearchTerm, setFrenteSearchTerm] = useState('');
 
     // Modal states
     const [showModal, setShowModal] = useState(false);
@@ -55,6 +63,7 @@ const FrentesEstrategicas = () => {
     // Load data
     useEffect(() => {
         loadFrentes();
+        loadResponsaveis();
     }, []);
 
     const loadFrentes = async () => {
@@ -66,6 +75,15 @@ const FrentesEstrategicas = () => {
             console.error('Erro ao carregar frentes:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const loadResponsaveis = async () => {
+        try {
+            const data = await responsaveisService.getAll();
+            setResponsaveis(data || []);
+        } catch (error) {
+            console.error('Erro ao carregar responsáveis:', error);
         }
     };
 
@@ -160,12 +178,14 @@ const FrentesEstrategicas = () => {
                 case 'objetivo':
                     if (modalData.id) {
                         await objetivosService.update(modalData.id, {
+                            titulo: modalData.titulo,
                             descricao: modalData.descricao,
                             responsavel: modalData.responsavel,
                             data_expectativa: modalData.data_expectativa || null
                         });
                     } else {
                         await objetivosService.create({
+                            titulo: modalData.titulo,
                             descricao: modalData.descricao,
                             responsavel: modalData.responsavel,
                             data_expectativa: modalData.data_expectativa || null,
@@ -339,6 +359,7 @@ const FrentesEstrategicas = () => {
     const handleEditObjetivo = () => {
         setEditingObjetivo(true);
         setObjetivoEditData({
+            titulo: selectedObjetivo.titulo || '',
             descricao: selectedObjetivo.descricao || '',
             responsavel: selectedObjetivo.responsavel || '',
             data_expectativa: selectedObjetivo.data_expectativa || ''
@@ -351,7 +372,7 @@ const FrentesEstrategicas = () => {
     };
 
     const handleSaveObjetivoEdit = async () => {
-        if (!objetivoEditData.descricao?.trim() || savingObjetivo) return;
+        if (!objetivoEditData.titulo?.trim() || savingObjetivo) return;
         try {
             setSavingObjetivo(true);
             await objetivosService.update(selectedObjetivo.id, objetivoEditData);
@@ -430,7 +451,7 @@ const FrentesEstrategicas = () => {
                     >
                         <div className={styles.objetivoTop}>
                             <span className={styles.objetivoCodigo}>{objetivo.codigo}</span>
-                            <span className={styles.objetivoDescricao}>{objetivo.descricao}</span>
+                            <span className={styles.objetivoDescricao}>{objetivo.titulo || objetivo.descricao}</span>
                         </div>
                         <div className={styles.objetivoMeta}>
                             {objetivo.responsavel && (
@@ -448,37 +469,26 @@ const FrentesEstrategicas = () => {
 
                     <div className={styles.objetivoActions}>
                         <button
-                            className={`${styles.actionBtnLabeled} ${styles.add}`}
+                            className={styles.objetivoActionBtn}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 openModal('objetivo', { projeto_id: projetoId, parent_id: objetivo.id });
                             }}
                             title="Adicionar Sub-objetivo"
                         >
-                            <Plus size={14} />
-                            <span className={styles.btnLabel}>Sub</span>
+                            <Plus size={12} />
+                            <span>Sub</span>
                         </button>
                         <button
-                            className={styles.actionBtnLabeled}
+                            className={styles.objetivoActionBtn}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 openModal('objetivo', { ...objetivo, projeto_id: projetoId });
                             }}
                             title="Editar"
                         >
-                            <Pencil size={14} />
-                            <span className={styles.btnLabel}>Editar</span>
-                        </button>
-                        <button
-                            className={`${styles.actionBtnLabeled} ${styles.delete}`}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                openModal('objetivo', { ...objetivo, projeto_id: projetoId });
-                            }}
-                            title="Excluir"
-                        >
-                            <Trash2 size={14} />
-                            <span className={styles.btnLabel}>Excluir</span>
+                            <Pencil size={12} />
+                            <span>Editar</span>
                         </button>
                     </div>
                 </div>
@@ -566,8 +576,39 @@ const FrentesEstrategicas = () => {
 
     return (
         <div className="container">
-            <div className="page-header">
-                <h1 className="page-title">Fluxo Operacional</h1>
+            <div className="page-header" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                {selectedFrente && (
+                    <button
+                        onClick={() => setSelectedFrente(null)}
+                        title="Voltar"
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: '40px',
+                            height: '40px',
+                            background: '#3b82f6',
+                            border: 'none',
+                            borderRadius: '8px',
+                            color: 'white',
+                            cursor: 'pointer',
+                            flexShrink: 0
+                        }}
+                    >
+                        <ChevronLeft size={24} />
+                    </button>
+                )}
+                <h1 className="page-title" style={{ flex: 1 }}>
+                    {selectedFrente ? `${selectedFrente.codigo} - ${selectedFrente.descricao}` : 'Frentes Estratégicas'}
+                </h1>
+                {selectedFrente && (
+                    <button
+                        className={styles.addProjectHeaderBtn}
+                        onClick={() => openModal('projeto', { frente_id: selectedFrente.id })}
+                    >
+                        <Plus size={18} /> Novo Projeto
+                    </button>
+                )}
             </div>
 
             {frentes.length === 0 ? (
@@ -578,117 +619,130 @@ const FrentesEstrategicas = () => {
                         Acesse o menu Configurações para cadastrar suas frentes estratégicas.
                     </p>
                 </div>
+            ) : selectedFrente ? (
+                // ========== VISUALIZAÇÃO INTERNA DA FRENTE ==========
+                <div className={styles.treeContainer}>
+                    {/* Search bar for frente view */}
+                    <div className={styles.searchBar}>
+                        <Search size={18} className={styles.searchIcon} />
+                        <input
+                            type="text"
+                            className={styles.searchInput}
+                            placeholder="Pesquisar por projeto ou objetivo..."
+                            value={frenteSearchTerm}
+                            onChange={(e) => setFrenteSearchTerm(e.target.value)}
+                        />
+                    </div>
+
+                    {(!selectedFrente.projetos || selectedFrente.projetos.length === 0) ? (
+                        <div className={styles.emptyStateCentered}>
+                            <FolderKanban size={48} className={styles.emptyIcon} />
+                            <h2 className={styles.emptyTitle}>Nenhum projeto</h2>
+                            <p className={styles.emptyDescription}>
+                                Esta frente estratégica ainda não possui projetos.
+                            </p>
+                            <button
+                                className={styles.primaryBtn}
+                                onClick={() => openModal('projeto', { frente_id: selectedFrente.id })}
+                            >
+                                <Plus size={16} /> Adicionar Projeto
+                            </button>
+                        </div>
+                    ) : (
+                        selectedFrente.projetos
+                            .filter(projeto => {
+                                if (!frenteSearchTerm.trim()) return true;
+                                const term = frenteSearchTerm.toLowerCase();
+                                // Match project
+                                if (projeto.codigo?.toLowerCase().includes(term)) return true;
+                                if (projeto.descricao?.toLowerCase().includes(term)) return true;
+                                // Match objectives in project
+                                const projetoObjetivos = objetivosTree[projeto.id] || [];
+                                return projetoObjetivos.some(obj =>
+                                    obj.titulo?.toLowerCase().includes(term) ||
+                                    obj.descricao?.toLowerCase().includes(term) ||
+                                    obj.codigo?.toLowerCase().includes(term)
+                                );
+                            })
+                            .map(projeto => (
+                                <div key={projeto.id} className={styles.projetoCard}>
+                                    <div
+                                        className={styles.projetoHeader}
+                                        onClick={() => toggleProjeto(projeto.id)}
+                                    >
+                                        <div className={styles.projetoInfo}>
+                                            <span className={styles.projetoCodigo}>{projeto.codigo}</span>
+                                            <span className={styles.projetoDescricao}>{projeto.descricao}</span>
+                                        </div>
+                                        <div className={styles.projetoActions}>
+                                            <button
+                                                className={styles.projetoActionBtn}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    openModal('objetivo', { projeto_id: projeto.id });
+                                                }}
+                                                title="Adicionar Objetivo"
+                                            >
+                                                <Plus size={14} />
+                                                <span>Objetivo</span>
+                                            </button>
+                                            <button
+                                                className={styles.projetoActionBtn}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    openModal('projeto', { ...projeto, frente_id: selectedFrente.id });
+                                                }}
+                                                title="Editar Projeto"
+                                            >
+                                                <Pencil size={12} />
+                                                <span>Editar</span>
+                                            </button>
+                                            <ChevronRight
+                                                size={18}
+                                                className={`${styles.expandIcon} ${styles.whiteIcon} ${expandedProjetos[projeto.id] ? styles.expanded : ''}`}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {expandedProjetos[projeto.id] && (
+                                        <div className={styles.projetoContent}>
+                                            {objetivosTree[projeto.id]?.length > 0 ? (
+                                                objetivosTree[projeto.id].map(objetivo => renderObjetivo(objetivo, projeto.id))
+                                            ) : (
+                                                <button
+                                                    className={styles.addButton}
+                                                    onClick={() => openModal('objetivo', { projeto_id: projeto.id })}
+                                                >
+                                                    <Flag size={16} />
+                                                    Adicionar Objetivo
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            ))
+                    )}
+                </div>
             ) : (
+                // ========== LISTA DE FRENTES ESTRATÉGICAS ==========
                 <div className={styles.treeContainer}>
                     {frentes.map(frente => (
                         <div key={frente.id} className={styles.frenteCard}>
                             <div
                                 className={styles.frenteHeader}
-                                onClick={() => toggleFrente(frente.id)}
+                                onClick={() => setSelectedFrente(frente)}
                             >
                                 <div className={styles.frenteInfo}>
                                     <span className={styles.frenteCodigo}>{frente.codigo}</span>
                                     <span className={styles.frenteDescricao}>{frente.descricao}</span>
                                 </div>
                                 <div className={styles.frenteActions}>
-                                    <button
-                                        className={styles.iconBtn}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            openModal('projeto', { frente_id: frente.id });
-                                        }}
-                                        title="Adicionar Projeto"
-                                    >
-                                        <Plus size={18} />
-                                    </button>
-                                    <button
-                                        className={styles.iconBtn}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            openModal('frente', frente);
-                                        }}
-                                        title="Editar"
-                                    >
-                                        <Pencil size={16} />
-                                    </button>
                                     <ChevronRight
                                         size={20}
-                                        className={`${styles.expandIcon} ${expandedFrentes[frente.id] ? styles.expanded : ''}`}
+                                        className={styles.expandIcon}
                                     />
                                 </div>
                             </div>
-
-                            {expandedFrentes[frente.id] && (
-                                <div className={styles.frenteContent}>
-                                    {(!frente.projetos || frente.projetos.length === 0) ? (
-                                        <button
-                                            className={styles.addButton}
-                                            onClick={() => openModal('projeto', { frente_id: frente.id })}
-                                        >
-                                            <FolderKanban size={16} />
-                                            Adicionar Projeto
-                                        </button>
-                                    ) : (
-                                        frente.projetos.map(projeto => (
-                                            <div key={projeto.id} className={styles.projetoCard}>
-                                                <div
-                                                    className={styles.projetoHeader}
-                                                    onClick={() => toggleProjeto(projeto.id)}
-                                                >
-                                                    <div className={styles.projetoInfo}>
-                                                        <span className={styles.projetoCodigo}>{projeto.codigo}</span>
-                                                        <span className={styles.projetoDescricao}>{projeto.descricao}</span>
-                                                    </div>
-                                                    <div className={styles.projetoActions}>
-                                                        <button
-                                                            className={styles.iconBtn}
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                openModal('objetivo', { projeto_id: projeto.id });
-                                                            }}
-                                                            title="Adicionar Objetivo"
-                                                        >
-                                                            <Plus size={16} />
-                                                        </button>
-                                                        <button
-                                                            className={styles.iconBtn}
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                openModal('projeto', { ...projeto, frente_id: frente.id });
-                                                            }}
-                                                            title="Editar"
-                                                        >
-                                                            <Pencil size={14} />
-                                                        </button>
-                                                        <ChevronRight
-                                                            size={18}
-                                                            className={`${styles.expandIcon} ${expandedProjetos[projeto.id] ? styles.expanded : ''}`}
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                {expandedProjetos[projeto.id] && (
-                                                    <div className={styles.projetoContent}>
-                                                        {(!objetivosTree[projeto.id] || objetivosTree[projeto.id].length === 0) ? (
-                                                            <button
-                                                                className={styles.addButton}
-                                                                onClick={() => openModal('objetivo', { projeto_id: projeto.id })}
-                                                            >
-                                                                <Flag size={16} />
-                                                                Adicionar Objetivo
-                                                            </button>
-                                                        ) : (
-                                                            objetivosTree[projeto.id].map(objetivo =>
-                                                                renderObjetivo(objetivo, projeto.id)
-                                                            )
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                            )}
                         </div>
                     ))}
                 </div>
@@ -698,9 +752,14 @@ const FrentesEstrategicas = () => {
             {showModal && (
                 <div className={styles.modalOverlay} onClick={closeModal}>
                     <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+                        {/* Modal Header */}
                         <div className={styles.modalHeader}>
                             <h3 className={styles.modalTitle}>
-                                {modalData.id ? 'Editar' : 'Nova'}{' '}
+                                {modalType === 'frente' && <Target size={22} style={{ marginRight: '10px' }} />}
+                                {modalType === 'projeto' && <FolderKanban size={22} style={{ marginRight: '10px' }} />}
+                                {modalType === 'objetivo' && <Flag size={22} style={{ marginRight: '10px' }} />}
+                                {modalType === 'tarefa' && <CheckSquare size={22} style={{ marginRight: '10px' }} />}
+                                {modalData.id ? 'Editar' : 'Novo'}{' '}
                                 {modalType === 'frente' && 'Frente Estratégica'}
                                 {modalType === 'projeto' && 'Projeto'}
                                 {modalType === 'objetivo' && (modalData.parent_id ? 'Sub-objetivo' : 'Objetivo')}
@@ -710,78 +769,181 @@ const FrentesEstrategicas = () => {
                                 <X size={20} />
                             </button>
                         </div>
+
                         <form onSubmit={handleSubmit}>
                             <div className={styles.modalBody}>
-                                {modalType === 'tarefa' && (
-                                    <div className={styles.formGroup}>
-                                        <label className={styles.formLabel}>Título *</label>
-                                        <input
-                                            type="text"
-                                            className={styles.formInput}
-                                            value={modalData.titulo || ''}
-                                            onChange={(e) => setModalData({ ...modalData, titulo: e.target.value })}
-                                            required
-                                            autoFocus
-                                            placeholder="Ex: Configurar ambiente"
-                                            maxLength={100}
-                                        />
-                                    </div>
-                                )}
-                                <div className={styles.formGroup}>
-                                    <label className={styles.formLabel}>
-                                        {modalType === 'tarefa' ? 'Descrição' : 'Descrição *'}
-                                    </label>
-                                    <textarea
-                                        className={styles.formTextarea}
-                                        value={modalData.descricao || ''}
-                                        onChange={(e) => setModalData({ ...modalData, descricao: e.target.value })}
-                                        required={modalType !== 'tarefa'}
-                                        autoFocus={modalType !== 'tarefa'}
-                                        placeholder={
-                                            modalType === 'frente' ? 'Ex: Transformação Digital' :
-                                                modalType === 'projeto' ? 'Ex: Modernização de Sistemas' :
-                                                    modalType === 'objetivo' ? 'Ex: Implementar novo CRM' :
-                                                        'Detalhes adicionais da tarefa (opcional)'
-                                        }
-                                    />
-                                </div>
-
-                                {(modalType === 'objetivo' || modalType === 'tarefa') && (
+                                {/* ========== PROJETO FORM ========== */}
+                                {modalType === 'projeto' && (
                                     <>
                                         <div className={styles.formGroup}>
-                                            <label className={styles.formLabel}>Responsável</label>
+                                            <label className={styles.formLabel}>Nome do Projeto *</label>
                                             <input
                                                 type="text"
                                                 className={styles.formInput}
-                                                value={modalData.responsavel || ''}
-                                                onChange={(e) => setModalData({ ...modalData, responsavel: e.target.value })}
-                                                placeholder="Nome do responsável"
+                                                value={modalData.descricao || ''}
+                                                onChange={(e) => setModalData({ ...modalData, descricao: e.target.value })}
+                                                required
+                                                autoFocus
+                                                placeholder="Ex: Modernização de Sistemas"
+                                                maxLength={500}
+                                            />
+                                        </div>
+                                        {selectedFrente && (
+                                            <div className={styles.formGroup}>
+                                                <label className={styles.formLabel}>Frente Estratégica</label>
+                                                <div className={styles.readOnlyField}>
+                                                    <Target size={16} />
+                                                    {selectedFrente.codigo} - {selectedFrente.descricao}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+
+                                {/* ========== FRENTE FORM ========== */}
+                                {modalType === 'frente' && (
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>Nome da Frente *</label>
+                                        <input
+                                            type="text"
+                                            className={styles.formInput}
+                                            value={modalData.descricao || ''}
+                                            onChange={(e) => setModalData({ ...modalData, descricao: e.target.value })}
+                                            required
+                                            autoFocus
+                                            placeholder="Ex: Transformação Digital"
+                                            maxLength={500}
+                                        />
+                                    </div>
+                                )}
+
+                                {/* ========== TAREFA FORM ========== */}
+                                {modalType === 'tarefa' && (
+                                    <>
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.formLabel}>Título *</label>
+                                            <input
+                                                type="text"
+                                                className={styles.formInput}
+                                                value={modalData.titulo || ''}
+                                                onChange={(e) => setModalData({ ...modalData, titulo: e.target.value })}
+                                                required
+                                                autoFocus
+                                                placeholder="Ex: Configurar ambiente"
+                                                maxLength={100}
                                             />
                                         </div>
                                         <div className={styles.formGroup}>
-                                            <label className={styles.formLabel}>Data Expectativa</label>
-                                            <input
-                                                type="date"
-                                                className={styles.formInput}
-                                                value={modalData.data_expectativa || ''}
-                                                onChange={(e) => setModalData({ ...modalData, data_expectativa: e.target.value })}
+                                            <label className={styles.formLabel}>Descrição</label>
+                                            <textarea
+                                                className={styles.formTextarea}
+                                                value={modalData.descricao || ''}
+                                                onChange={(e) => setModalData({ ...modalData, descricao: e.target.value })}
+                                                placeholder="Detalhes adicionais da tarefa (opcional)"
+                                                rows={3}
                                             />
+                                        </div>
+                                        <div className={styles.formRow}>
+                                            <div className={styles.formGroup}>
+                                                <label className={styles.formLabel}>Responsável</label>
+                                                <select
+                                                    className={styles.formSelect}
+                                                    value={modalData.responsavel || ''}
+                                                    onChange={(e) => setModalData({ ...modalData, responsavel: e.target.value })}
+                                                >
+                                                    <option value="">Selecione...</option>
+                                                    {responsaveis.map(resp => (
+                                                        <option key={resp.id} value={resp.nome}>
+                                                            {resp.nome}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className={styles.formGroup}>
+                                                <label className={styles.formLabel}>Data Expectativa</label>
+                                                <input
+                                                    type="date"
+                                                    className={styles.formInput}
+                                                    value={modalData.data_expectativa || ''}
+                                                    onChange={(e) => setModalData({ ...modalData, data_expectativa: e.target.value })}
+                                                />
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* ========== OBJETIVO FORM ========== */}
+                                {modalType === 'objetivo' && (
+                                    <>
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.formLabel}>Título *</label>
+                                            <input
+                                                type="text"
+                                                className={styles.formInput}
+                                                value={modalData.titulo || ''}
+                                                onChange={(e) => setModalData({ ...modalData, titulo: e.target.value })}
+                                                required
+                                                autoFocus
+                                                placeholder="Ex: Implementar novo CRM"
+                                                maxLength={200}
+                                            />
+                                        </div>
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.formLabel}>Descrição</label>
+                                            <textarea
+                                                className={styles.formTextarea}
+                                                value={modalData.descricao || ''}
+                                                onChange={(e) => setModalData({ ...modalData, descricao: e.target.value })}
+                                                placeholder="Detalhes do objetivo (opcional)"
+                                                rows={3}
+                                            />
+                                        </div>
+                                        <div className={styles.formRow}>
+                                            <div className={styles.formGroup}>
+                                                <label className={styles.formLabel}>Responsável</label>
+                                                <select
+                                                    className={styles.formSelect}
+                                                    value={modalData.responsavel || ''}
+                                                    onChange={(e) => setModalData({ ...modalData, responsavel: e.target.value })}
+                                                >
+                                                    <option value="">Selecione...</option>
+                                                    {responsaveis.map(resp => (
+                                                        <option key={resp.id} value={resp.nome}>
+                                                            {resp.nome}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className={styles.formGroup}>
+                                                <label className={styles.formLabel}>Data Expectativa</label>
+                                                <input
+                                                    type="date"
+                                                    className={styles.formInput}
+                                                    value={modalData.data_expectativa || ''}
+                                                    onChange={(e) => setModalData({ ...modalData, data_expectativa: e.target.value })}
+                                                />
+                                            </div>
                                         </div>
                                     </>
                                 )}
                             </div>
+
+                            {/* Modal Footer */}
                             <div className={styles.modalFooter}>
                                 {modalData.id && (
                                     <button type="button" className={styles.deleteBtn} onClick={handleDelete}>
+                                        <Trash2 size={16} />
                                         Excluir
                                     </button>
                                 )}
-                                <button type="button" className={styles.cancelBtn} onClick={closeModal}>
-                                    Cancelar
-                                </button>
-                                <button type="submit" className={styles.submitBtn} disabled={saving}>
-                                    {saving ? 'Salvando...' : 'Salvar'}
-                                </button>
+                                <div className={styles.footerRight}>
+                                    <button type="button" className={styles.cancelBtn} onClick={closeModal}>
+                                        Cancelar
+                                    </button>
+                                    <button type="submit" className={styles.submitBtn} disabled={saving}>
+                                        {saving ? 'Salvando...' : (modalData.id ? 'Salvar' : 'Criar')}
+                                    </button>
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -861,15 +1023,6 @@ const FrentesEstrategicas = () => {
                                 {editingObjetivo ? 'Editar Objetivo' : `${selectedObjetivo.codigo} - ${selectedObjetivo.descricao}`}
                             </h3>
                             <div className={styles.headerButtons}>
-                                {!editingObjetivo && (
-                                    <button
-                                        className={styles.headerBtn}
-                                        onClick={handleEditObjetivo}
-                                        title="Editar Objetivo"
-                                    >
-                                        <Pencil size={18} />
-                                    </button>
-                                )}
                                 <button className={styles.modalClose} onClick={() => { setSelectedObjetivo(null); setShowNewTarefaForm(false); setEditingObjetivo(false); }}>
                                     <X size={20} />
                                 </button>
@@ -906,12 +1059,18 @@ const FrentesEstrategicas = () => {
                                     <div className={styles.formRow}>
                                         <div className={styles.formGroup}>
                                             <label className={styles.formLabel}>Responsável</label>
-                                            <input
-                                                type="text"
-                                                className={styles.formInput}
+                                            <select
+                                                className={styles.formSelect}
                                                 value={newTarefaData.responsavel}
                                                 onChange={(e) => setNewTarefaData({ ...newTarefaData, responsavel: e.target.value })}
-                                            />
+                                            >
+                                                <option value="">Selecione...</option>
+                                                {responsaveis.map(resp => (
+                                                    <option key={resp.id} value={resp.nome}>
+                                                        {resp.nome}
+                                                    </option>
+                                                ))}
+                                            </select>
                                         </div>
                                         <div className={styles.formGroup}>
                                             <label className={styles.formLabel}>Data Expectativa</label>
@@ -922,16 +1081,6 @@ const FrentesEstrategicas = () => {
                                                 onChange={(e) => setNewTarefaData({ ...newTarefaData, data_expectativa: e.target.value })}
                                             />
                                         </div>
-                                    </div>
-                                    <div className={styles.editActions}>
-                                        <button className={styles.cancelBtn} onClick={handleCancelNewTarefa}>Cancelar</button>
-                                        <button
-                                            className={styles.submitBtn}
-                                            onClick={handleCreateTarefaInline}
-                                            disabled={!newTarefaData.titulo?.trim() || savingTarefa}
-                                        >
-                                            <Save size={16} /> {savingTarefa ? 'Criando...' : 'Criar Tarefa'}
-                                        </button>
                                     </div>
                                 </div>
                             ) : (
@@ -993,6 +1142,35 @@ const FrentesEstrategicas = () => {
                                                 )}
                                             </div>
 
+                                            {/* Sub-objetivos Section (antes das tarefas) */}
+                                            {selectedObjetivo.children && selectedObjetivo.children.length > 0 && (
+                                                <div className={styles.subObjetivosSection}>
+                                                    <h4 className={styles.tarefasSectionTitle}>
+                                                        <Flag size={18} /> Sub-objetivos
+                                                    </h4>
+                                                    <div className={styles.subObjetivosList}>
+                                                        {selectedObjetivo.children.map(child => (
+                                                            <div
+                                                                key={child.id}
+                                                                className={styles.subObjetivoItem}
+                                                                onClick={() => {
+                                                                    setSelectedObjetivo(child);
+                                                                    setShowNewTarefaForm(false);
+                                                                    setEditingObjetivo(false);
+                                                                }}
+                                                                style={{ cursor: 'pointer' }}
+                                                            >
+                                                                <span className={styles.subObjetivoCodigo}>{child.codigo}</span>
+                                                                <span className={styles.subObjetivoDescricao}>
+                                                                    {child.titulo || child.descricao}
+                                                                </span>
+                                                                <ChevronRight size={16} className={styles.tarefaChevron} />
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
                                             {/* Tarefas Section */}
                                             <div className={styles.tarefasSection}>
                                                 <div className={styles.tarefasSectionHeader}>
@@ -1048,12 +1226,51 @@ const FrentesEstrategicas = () => {
                                 </>
                             )}
                             <div className={styles.modalFooter}>
-                                <button
-                                    className={styles.footerCloseBtn}
-                                    onClick={() => { setSelectedObjetivo(null); setShowNewTarefaForm(false); }}
-                                >
-                                    Fechar
-                                </button>
+                                {showNewTarefaForm ? (
+                                    // Botões para Nova Tarefa
+                                    <>
+                                        <button
+                                            className={styles.footerCloseBtn}
+                                            onClick={handleCancelNewTarefa}
+                                        >
+                                            Cancelar
+                                        </button>
+                                        <button
+                                            className={styles.primaryBtn}
+                                            onClick={handleCreateTarefaInline}
+                                            disabled={!newTarefaData.titulo?.trim() || savingTarefa}
+                                            style={{ marginLeft: '8px' }}
+                                        >
+                                            <Save size={16} style={{ marginRight: '4px' }} />
+                                            {savingTarefa ? 'Criando...' : 'Criar Tarefa'}
+                                        </button>
+                                    </>
+                                ) : (
+                                    // Botões padrão: Fechar e Editar
+                                    <>
+                                        <button
+                                            className={styles.footerCloseBtn}
+                                            onClick={() => { setSelectedObjetivo(null); setShowNewTarefaForm(false); }}
+                                        >
+                                            Fechar
+                                        </button>
+                                        {!editingObjetivo && (
+                                            <button
+                                                className={styles.primaryBtn}
+                                                onClick={() => {
+                                                    const objToEdit = { ...selectedObjetivo, projeto_id: selectedProjetoId };
+                                                    setSelectedObjetivo(null);
+                                                    setShowNewTarefaForm(false);
+                                                    openModal('objetivo', objToEdit);
+                                                }}
+                                                style={{ marginLeft: '8px' }}
+                                            >
+                                                <Pencil size={16} style={{ marginRight: '4px' }} />
+                                                Editar
+                                            </button>
+                                        )}
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -1068,7 +1285,7 @@ const FrentesEstrategicas = () => {
                     onUpdate={handleTarefaUpdate}
                 />
             )}
-        </div>
+        </div >
     );
 };
 

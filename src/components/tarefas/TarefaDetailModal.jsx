@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import tarefasService from '../../services/tarefasService';
 import notasService from '../../services/notasService';
+import responsaveisService from '../../services/responsaveisService';
 import { useAuth } from '../../contexts/AuthContext';
 import styles from './TarefaDetailModal.module.css';
 
@@ -14,6 +15,7 @@ const TarefaDetailModal = ({ tarefa, onClose, onUpdate }) => {
     const [tarefaData, setTarefaData] = useState(null);
     const [notas, setNotas] = useState([]);
     const [newNota, setNewNota] = useState('');
+    const [responsaveis, setResponsaveis] = useState([]);
     const [addingNota, setAddingNota] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editData, setEditData] = useState({});
@@ -24,8 +26,18 @@ const TarefaDetailModal = ({ tarefa, onClose, onUpdate }) => {
     useEffect(() => {
         if (tarefa?.id) {
             loadTarefaDetails();
+            loadResponsaveis();
         }
     }, [tarefa?.id]);
+
+    const loadResponsaveis = async () => {
+        try {
+            const data = await responsaveisService.getAll();
+            setResponsaveis(data || []);
+        } catch (error) {
+            console.error('Erro ao carregar responsáveis:', error);
+        }
+    };
 
     const loadTarefaDetails = async () => {
         try {
@@ -180,12 +192,23 @@ const TarefaDetailModal = ({ tarefa, onClose, onUpdate }) => {
                         <div className={styles.loading}>Carregando...</div>
                     ) : (
                         <>
-                            {/* Status simples */}
-                            <div className={styles.statusCard}>
-                                <span className={styles.statusLabel}>Status</span>
-                                <span className={`${styles.statusBadge} ${isConcluida ? styles.concluida : styles.pendente}`}>
-                                    {isConcluida ? 'Concluída' : 'Pendente'}
-                                </span>
+                            {/* Status e Conclusão */}
+                            <div className={styles.statusRow}>
+                                <div className={styles.statusCard}>
+                                    <span className={styles.statusLabel}>Status</span>
+                                    <span className={`${styles.statusBadge} ${isConcluida ? styles.concluida : styles.pendente}`}>
+                                        {isConcluida ? 'Concluída' : 'Pendente'}
+                                    </span>
+                                </div>
+                                {!isEditing && !loading && (
+                                    <button
+                                        className={`${styles.concluirBtn} ${isConcluida ? styles.reabrir : ''}`}
+                                        onClick={handleToggleConcluida}
+                                    >
+                                        <Check size={18} />
+                                        {isConcluida ? 'Reabrir' : 'Concluir'}
+                                    </button>
+                                )}
                             </div>
 
                             {/* Edit Mode */}
@@ -215,13 +238,18 @@ const TarefaDetailModal = ({ tarefa, onClose, onUpdate }) => {
                                     <div className={styles.formRow}>
                                         <div className={styles.formGroup}>
                                             <label className={styles.label}>Responsável</label>
-                                            <input
-                                                type="text"
+                                            <select
                                                 className={styles.input}
-                                                value={editData.responsavel}
+                                                value={editData.responsavel || ''}
                                                 onChange={(e) => setEditData({ ...editData, responsavel: e.target.value })}
-                                                placeholder="Nome do responsável"
-                                            />
+                                            >
+                                                <option value="">Selecione...</option>
+                                                {responsaveis.map(resp => (
+                                                    <option key={resp.id} value={resp.nome}>
+                                                        {resp.nome}
+                                                    </option>
+                                                ))}
+                                            </select>
                                         </div>
                                         <div className={styles.formGroup}>
                                             <label className={styles.label}>Data Expectativa</label>
@@ -292,19 +320,9 @@ const TarefaDetailModal = ({ tarefa, onClose, onUpdate }) => {
                                 </div>
                             )}
 
-                            {/* Action Buttons */}
-                            {!isEditing && (
-                                <div className={styles.actionButtons}>
-                                    <button className={styles.editBtn} onClick={() => setIsEditing(true)}>
-                                        <Pencil size={16} />
-                                        Editar
-                                    </button>
-                                    <button className={styles.deleteBtn} onClick={handleDelete}>
-                                        <Trash2 size={16} />
-                                        Excluir
-                                    </button>
-                                </div>
-                            )}
+                            {/* Action Buttons Removed from here to moved to footer */
+                                null
+                            }
 
                             {/* Notas Section */}
                             <div className={styles.notasSection}>
@@ -324,76 +342,78 @@ const TarefaDetailModal = ({ tarefa, onClose, onUpdate }) => {
                                         onChange={(e) => setNewNota(e.target.value)}
                                         rows={2}
                                     />
-                                    <button
-                                        className={styles.notaAddBtn}
-                                        onClick={handleAddNota}
-                                        disabled={!newNota.trim() || addingNota}
-                                    >
-                                        <Plus size={16} />
-                                        {addingNota ? 'Adicionando...' : 'Adicionar Nota'}
-                                    </button>
+                                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
+                                        <button
+                                            className={styles.notaAddBtn}
+                                            onClick={handleAddNota}
+                                            disabled={!newNota.trim() || addingNota}
+                                        >
+                                            <Plus size={16} />
+                                            {addingNota ? 'Adicionando...' : 'Adicionar Nota'}
+                                        </button>
+                                    </div>
                                 </div>
+                            </div>
 
-                                <div className={styles.notasList}>
-                                    {notas.length === 0 ? (
-                                        <div className={styles.notasEmpty}>
-                                            Nenhuma nota registrada
-                                        </div>
-                                    ) : (
-                                        notas.map(nota => (
-                                            <div key={nota.id} className={styles.notaItem}>
-                                                <div className={styles.notaIconArea}>
-                                                    <MessageSquare size={16} className={styles.notaIcon} />
-                                                    <span className={styles.notaIconLabel}>Nota</span>
-                                                </div>
-                                                <div className={styles.notaContent}>
-                                                    <div className={styles.notaMeta}>
-                                                        <span className={styles.notaAutor}>{nota.usuario}</span>
-                                                        <span className={styles.notaData}>{formatDateTime(nota.data_hora)}</span>
-                                                    </div>
-                                                    {editingNotaId === nota.id ? (
-                                                        <div className={styles.notaEditForm}>
-                                                            <textarea
-                                                                className={styles.notaEditInput}
-                                                                value={editingNotaTexto}
-                                                                onChange={(e) => setEditingNotaTexto(e.target.value)}
-                                                                rows={2}
-                                                            />
-                                                            <div className={styles.notaEditActions}>
-                                                                <button className={styles.notaCancelBtn} onClick={handleCancelNotaEdit}>
-                                                                    Cancelar
-                                                                </button>
-                                                                <button className={styles.notaSaveBtn} onClick={handleSaveNotaEdit}>
-                                                                    <Save size={14} /> Salvar
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <p className={styles.notaTexto}>{nota.texto}</p>
-                                                    )}
-                                                    {editingNotaId !== nota.id && (
-                                                        <div className={styles.notaActions}>
-                                                            <button
-                                                                className={styles.notaEditBtn}
-                                                                onClick={() => handleEditNota(nota)}
-                                                                title="Editar nota"
-                                                            >
-                                                                <Pencil size={12} /> Editar
-                                                            </button>
-                                                            <button
-                                                                className={styles.notaDeleteBtn}
-                                                                onClick={() => handleDeleteNota(nota.id)}
-                                                                title="Excluir nota"
-                                                            >
-                                                                <Trash2 size={12} /> Excluir
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                </div>
+                            <div className={styles.notasList}>
+                                {notas.length === 0 ? (
+                                    <div className={styles.notasEmpty}>
+                                        Nenhuma nota registrada
+                                    </div>
+                                ) : (
+                                    notas.map(nota => (
+                                        <div key={nota.id} className={styles.notaItem}>
+                                            <div className={styles.notaIconArea}>
+                                                <MessageSquare size={16} className={styles.notaIcon} />
+                                                <span className={styles.notaIconLabel}>Nota</span>
                                             </div>
-                                        ))
-                                    )}
-                                </div>
+                                            <div className={styles.notaContent}>
+                                                <div className={styles.notaMeta}>
+                                                    <span className={styles.notaAutor}>{nota.usuario}</span>
+                                                    <span className={styles.notaData}>{formatDateTime(nota.data_hora)}</span>
+                                                </div>
+                                                {editingNotaId === nota.id ? (
+                                                    <div className={styles.notaEditForm}>
+                                                        <textarea
+                                                            className={styles.notaEditInput}
+                                                            value={editingNotaTexto}
+                                                            onChange={(e) => setEditingNotaTexto(e.target.value)}
+                                                            rows={2}
+                                                        />
+                                                        <div className={styles.notaEditActions}>
+                                                            <button className={styles.notaCancelBtn} onClick={handleCancelNotaEdit}>
+                                                                Cancelar
+                                                            </button>
+                                                            <button className={styles.notaSaveBtn} onClick={handleSaveNotaEdit}>
+                                                                <Save size={14} /> Salvar
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <p className={styles.notaTexto}>{nota.texto}</p>
+                                                )}
+                                                {editingNotaId !== nota.id && (
+                                                    <div className={styles.notaActions}>
+                                                        <button
+                                                            className={styles.notaEditBtn}
+                                                            onClick={() => handleEditNota(nota)}
+                                                            title="Editar nota"
+                                                        >
+                                                            <Pencil size={12} /> Editar
+                                                        </button>
+                                                        <button
+                                                            className={styles.notaDeleteBtn}
+                                                            onClick={() => handleDeleteNota(nota.id)}
+                                                            title="Excluir nota"
+                                                        >
+                                                            <Trash2 size={12} /> Excluir
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
                             </div>
                         </>
                     )}
@@ -401,21 +421,30 @@ const TarefaDetailModal = ({ tarefa, onClose, onUpdate }) => {
 
                 {/* Footer com botões */}
                 <div className={styles.footer}>
-                    <button className={styles.footerCloseBtn} onClick={onClose}>
-                        Fechar
-                    </button>
-                    {!loading && (
-                        <button
-                            className={`${styles.footerConcluirBtn} ${isConcluida ? styles.reabrir : ''}`}
-                            onClick={handleToggleConcluida}
-                        >
-                            <Check size={18} />
-                            {isConcluida ? 'Reabrir Tarefa' : 'Concluir Tarefa'}
-                        </button>
+                    {!isEditing ? (
+                        <div className={styles.footerActions}>
+                            <button className={styles.footerCloseBtn} onClick={onClose}>
+                                Fechar
+                            </button>
+                            <button className={styles.editBtnSimple} onClick={() => setIsEditing(true)}>
+                                <Pencil size={16} />
+                                Editar
+                            </button>
+                            <button className={styles.deleteBtnSimple} onClick={handleDelete}>
+                                <Trash2 size={16} />
+                                Excluir
+                            </button>
+                        </div>
+                    ) : (
+                        <div className={styles.footerActions}>
+                            <button className={styles.footerCloseBtn} onClick={onClose}>
+                                Fechar
+                            </button>
+                        </div>
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 

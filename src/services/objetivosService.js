@@ -91,7 +91,10 @@ export const getById = async (id) => {
 /**
  * Cria um novo objetivo (código gerado automaticamente pelo trigger)
  */
-export const create = async ({ descricao, responsavel, data_expectativa, projeto_id, parent_id = null }) => {
+/**
+ * Cria um novo objetivo (código gerado automaticamente pelo trigger)
+ */
+export const create = async ({ titulo, descricao, responsavel, data_expectativa, projeto_id, parent_id = null }) => {
     // Calcula o nível baseado no pai
     let nivel = 1;
     if (parent_id) {
@@ -109,6 +112,7 @@ export const create = async ({ descricao, responsavel, data_expectativa, projeto
     const { data, error } = await supabase
         .from(TABLE_NAME)
         .insert({
+            titulo,
             descricao,
             responsavel,
             data_expectativa,
@@ -126,8 +130,9 @@ export const create = async ({ descricao, responsavel, data_expectativa, projeto
 /**
  * Atualiza um objetivo
  */
-export const update = async (id, { descricao, responsavel, data_expectativa, ordem }) => {
+export const update = async (id, { titulo, descricao, responsavel, data_expectativa, ordem }) => {
     const updateData = {};
+    if (titulo !== undefined) updateData.titulo = titulo;
     if (descricao !== undefined) updateData.descricao = descricao;
     if (responsavel !== undefined) updateData.responsavel = responsavel;
     if (data_expectativa !== undefined) updateData.data_expectativa = data_expectativa;
