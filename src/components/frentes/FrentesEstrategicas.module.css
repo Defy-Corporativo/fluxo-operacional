@@ -1295,6 +1295,27 @@
     margin: 0;
 }
 
+/* Tarefas Filter Row */
+.tarefasFilterRow {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+@media (max-width: 767px) {
+    .tarefasFilterRow {
+        flex-wrap: wrap;
+    }
+
+    .tarefasFilterRow .filterToggle,
+    .tarefasFilterRow .filterDateInput {
+        flex: 1;
+        min-width: 140px;
+    }
+}
+
+
 .tarefasListDetail {
     display: flex;
     flex-direction: column;

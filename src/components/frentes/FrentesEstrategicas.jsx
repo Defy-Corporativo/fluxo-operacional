@@ -62,6 +62,10 @@ const FrentesEstrategicas = () => {
     // Edição inline de objetivo
     const [editingObjetivo, setEditingObjetivo] = useState(false);
     const [objetivoEditData, setObjetivoEditData] = useState({});
+
+    // Filtros de tarefas no modal de objetivo
+    const [tarefaFilterPendingOnly, setTarefaFilterPendingOnly] = useState(false);
+    const [tarefaFilterDate, setTarefaFilterDate] = useState('');
     const [savingObjetivo, setSavingObjetivo] = useState(false);
 
     // Load data
@@ -1083,7 +1087,7 @@ const FrentesEstrategicas = () => {
 
             {/* Objetivo Detail Modal */}
             {selectedObjetivo && (
-                <div className={styles.modalOverlay} onClick={() => { setSelectedObjetivo(null); setShowNewTarefaForm(false); }}>
+                <div className={styles.modalOverlay} onClick={() => { setSelectedObjetivo(null); setShowNewTarefaForm(false); setTarefaFilterPendingOnly(false); setTarefaFilterDate(''); }}>
                     <div className={`${styles.modal} ${styles.modalLarge}`} onClick={(e) => e.stopPropagation()}>
                         <div className={styles.modalHeader}>
                             <h3 className={styles.modalTitle}>
@@ -1091,7 +1095,7 @@ const FrentesEstrategicas = () => {
                                 {editingObjetivo ? 'Editar Objetivo' : `${selectedObjetivo.codigo} - ${selectedObjetivo.descricao}`}
                             </h3>
                             <div className={styles.headerButtons}>
-                                <button className={styles.modalClose} onClick={() => { setSelectedObjetivo(null); setShowNewTarefaForm(false); setEditingObjetivo(false); }}>
+                                <button className={styles.modalClose} onClick={() => { setSelectedObjetivo(null); setShowNewTarefaForm(false); setEditingObjetivo(false); setTarefaFilterPendingOnly(false); setTarefaFilterDate(''); }}>
                                     <X size={20} />
                                 </button>
                             </div>
@@ -1254,38 +1258,69 @@ const FrentesEstrategicas = () => {
                                                     </button>
                                                 </div>
 
+                                                {/* Filtros de Tarefas */}
+                                                <div className={styles.tarefasFilterRow}>
+                                                    <button
+                                                        className={`${styles.filterToggle} ${tarefaFilterPendingOnly ? styles.active : ''}`}
+                                                        onClick={() => setTarefaFilterPendingOnly(!tarefaFilterPendingOnly)}
+                                                        title="Mostrar apenas tarefas pendentes"
+                                                    >
+                                                        <CheckSquare size={16} />
+                                                        Pendentes
+                                                    </button>
+                                                    <input
+                                                        type="date"
+                                                        className={styles.filterDateInput}
+                                                        value={tarefaFilterDate}
+                                                        onChange={(e) => setTarefaFilterDate(e.target.value)}
+                                                        title="Filtrar por data de expectativa"
+                                                    />
+                                                </div>
+
                                                 {(!tarefasMap[selectedObjetivo.id] || tarefasMap[selectedObjetivo.id].length === 0) ? (
                                                     <div className={styles.emptyState} style={{ padding: '24px' }}>
                                                         Nenhuma tarefa cadastrada para este objetivo.
                                                     </div>
                                                 ) : (
                                                     <div className={styles.tarefasListDetail}>
-                                                        {tarefasMap[selectedObjetivo.id].map(tarefa => (
-                                                            <div
-                                                                key={tarefa.id}
-                                                                className={styles.tarefaItemDetail}
-                                                                onClick={() => handleSelectTarefa(tarefa)}
-                                                                style={{ cursor: 'pointer' }}
-                                                            >
-                                                                <span className={`${styles.statusBadge} ${tarefa.concluida ? styles.concluida : styles.pendente}`}>
-                                                                    {tarefa.concluida ? 'Concluída' : 'Pendente'}
-                                                                </span>
-                                                                <div className={styles.tarefaMain}>
-                                                                    <div className={styles.tarefaTop}>
-                                                                        <span className={styles.tarefaCodigo}>{tarefa.codigo}</span>
-                                                                        <span className={`${styles.tarefaDescricao} ${tarefa.concluida ? styles.concluida : ''}`}>
-                                                                            {tarefa.titulo || tarefa.descricao}
-                                                                        </span>
+                                                        {tarefasMap[selectedObjetivo.id]
+                                                            .filter(tarefa => {
+                                                                // Filtro de pendentes
+                                                                if (tarefaFilterPendingOnly && tarefa.concluida) {
+                                                                    return false;
+                                                                }
+                                                                // Filtro por data
+                                                                if (tarefaFilterDate && tarefa.data_expectativa !== tarefaFilterDate) {
+                                                                    return false;
+                                                                }
+                                                                return true;
+                                                            })
+                                                            .map(tarefa => (
+                                                                <div
+                                                                    key={tarefa.id}
+                                                                    className={styles.tarefaItemDetail}
+                                                                    onClick={() => handleSelectTarefa(tarefa)}
+                                                                    style={{ cursor: 'pointer' }}
+                                                                >
+                                                                    <span className={`${styles.statusBadge} ${tarefa.concluida ? styles.concluida : styles.pendente}`}>
+                                                                        {tarefa.concluida ? 'Concluída' : 'Pendente'}
+                                                                    </span>
+                                                                    <div className={styles.tarefaMain}>
+                                                                        <div className={styles.tarefaTop}>
+                                                                            <span className={styles.tarefaCodigo}>{tarefa.codigo}</span>
+                                                                            <span className={`${styles.tarefaDescricao} ${tarefa.concluida ? styles.concluida : ''}`}>
+                                                                                {tarefa.titulo || tarefa.descricao}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className={styles.tarefaMeta}>
+                                                                            {tarefa.responsavel && `${tarefa.responsavel}`}
+                                                                            {tarefa.responsavel && tarefa.data_expectativa && ' • '}
+                                                                            {tarefa.data_expectativa && formatDate(tarefa.data_expectativa)}
+                                                                        </div>
                                                                     </div>
-                                                                    <div className={styles.tarefaMeta}>
-                                                                        {tarefa.responsavel && `${tarefa.responsavel}`}
-                                                                        {tarefa.responsavel && tarefa.data_expectativa && ' • '}
-                                                                        {tarefa.data_expectativa && formatDate(tarefa.data_expectativa)}
-                                                                    </div>
+                                                                    <ChevronRight size={16} className={styles.tarefaChevron} />
                                                                 </div>
-                                                                <ChevronRight size={16} className={styles.tarefaChevron} />
-                                                            </div>
-                                                        ))}
+                                                            ))}
                                                     </div>
                                                 )}
                                             </div>
@@ -1318,7 +1353,7 @@ const FrentesEstrategicas = () => {
                                     <>
                                         <button
                                             className={styles.footerCloseBtn}
-                                            onClick={() => { setSelectedObjetivo(null); setShowNewTarefaForm(false); }}
+                                            onClick={() => { setSelectedObjetivo(null); setShowNewTarefaForm(false); setTarefaFilterPendingOnly(false); setTarefaFilterDate(''); }}
                                         >
                                             Fechar
                                         </button>
