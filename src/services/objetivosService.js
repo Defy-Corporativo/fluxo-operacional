@@ -94,7 +94,7 @@ export const getById = async (id) => {
 /**
  * Cria um novo objetivo (código gerado automaticamente pelo trigger)
  */
-export const create = async ({ titulo, descricao, responsavel, data_expectativa, projeto_id, parent_id = null }) => {
+export const create = async ({ titulo, descricao, responsavel, data_inicio, data_expectativa, projeto_id, parent_id = null }) => {
     // Calcula o nível baseado no pai
     let nivel = 1;
     if (parent_id) {
@@ -115,6 +115,7 @@ export const create = async ({ titulo, descricao, responsavel, data_expectativa,
             titulo,
             descricao,
             responsavel,
+            data_inicio,
             data_expectativa,
             projeto_id,
             parent_id,
@@ -130,11 +131,12 @@ export const create = async ({ titulo, descricao, responsavel, data_expectativa,
 /**
  * Atualiza um objetivo
  */
-export const update = async (id, { titulo, descricao, responsavel, data_expectativa, ordem }) => {
+export const update = async (id, { titulo, descricao, responsavel, data_inicio, data_expectativa, ordem }) => {
     const updateData = {};
     if (titulo !== undefined) updateData.titulo = titulo;
     if (descricao !== undefined) updateData.descricao = descricao;
     if (responsavel !== undefined) updateData.responsavel = responsavel;
+    if (data_inicio !== undefined) updateData.data_inicio = data_inicio;
     if (data_expectativa !== undefined) updateData.data_expectativa = data_expectativa;
     if (ordem !== undefined) updateData.ordem = ordem;
 

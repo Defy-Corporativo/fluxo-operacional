@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS flop_objetivos (
     titulo VARCHAR(200) NOT NULL,
     descricao VARCHAR(500), -- Descrição opcional
     responsavel VARCHAR(255),
+    data_inicio DATE, -- Data planejada de início
     data_expectativa DATE,
     projeto_id UUID NOT NULL REFERENCES flop_projetos(id) ON DELETE CASCADE,
     parent_id UUID REFERENCES flop_objetivos(id) ON DELETE CASCADE,
@@ -73,6 +74,7 @@ CREATE TABLE IF NOT EXISTS flop_tarefas (
     titulo VARCHAR(100) NOT NULL, -- Título curto da tarefa
     descricao TEXT, -- Descrição detalhada (opcional)
     responsavel VARCHAR(255),
+    data_inicio DATE, -- Data planejada de início
     data_expectativa DATE,
     objetivo_id UUID NOT NULL REFERENCES flop_objetivos(id) ON DELETE CASCADE,
     concluida BOOLEAN DEFAULT FALSE,

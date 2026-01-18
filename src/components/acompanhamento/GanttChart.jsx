@@ -5,9 +5,10 @@ import styles from './Acompanhamento.module.css';
 const GanttChart = ({ objetivos, tarefas }) => {
     // Calcular datas mínima e máxima para o range do gráfico
     const allDates = [
+        ...objetivos.map(o => o.data_inicio).filter(Boolean),
         ...objetivos.map(o => o.data_expectativa).filter(Boolean),
-        ...tarefas.map(t => t.data_expectativa).filter(Boolean),
-        ...tarefas.map(t => t.created_at).filter(Boolean)
+        ...tarefas.map(t => t.data_inicio).filter(Boolean),
+        ...tarefas.map(t => t.data_expectativa).filter(Boolean)
     ].map(d => new Date(d));
 
     const today = new Date();
@@ -26,8 +27,11 @@ const GanttChart = ({ objetivos, tarefas }) => {
     };
 
     const getBarPosition = (startDate, endDate) => {
-        const start = startDate ? new Date(startDate) : today;
-        const end = endDate ? new Date(endDate) : today;
+        // Retorna null se não tiver ambas as datas
+        if (!startDate || !endDate) return null;
+
+        const start = new Date(startDate);
+        const end = new Date(endDate);
 
         const startOffset = Math.max(0, (start - minDate) / (1000 * 60 * 60 * 24));
         const endOffset = Math.max(0, (end - minDate) / (1000 * 60 * 60 * 24));
@@ -137,7 +141,7 @@ const GanttChart = ({ objetivos, tarefas }) => {
                             <div key={objetivo.id} className={styles.ganttGroup}>
                                 <div className={styles.ganttLabelRow}>
                                     <Flag size={14} className={styles.ganttIcon} />
-                                    <span className={styles.ganttLabelText}>{objetivo.descricao}</span>
+                                    <span className={styles.ganttLabelText}>{objetivo.titulo || objetivo.descricao}</span>
                                 </div>
                                 {tarefasDoObjetivo.map(tarefa => {
                                     const exceeds = tarefaExceedsObjetivo(tarefa, objetivo);
@@ -165,26 +169,28 @@ const GanttChart = ({ objetivos, tarefas }) => {
 
                     {objetivos.map(objetivo => {
                         const tarefasDoObjetivo = tarefas.filter(t => t.objetivo_id === objetivo.id);
-                        const objetivoBar = getBarPosition(null, objetivo.data_expectativa);
+                        const objetivoBar = getBarPosition(objetivo.data_inicio, objetivo.data_expectativa);
 
                         return (
                             <div key={objetivo.id} className={styles.ganttBarsGroup}>
                                 {/* Barra do objetivo */}
                                 <div className={styles.ganttBarRow}>
-                                    {objetivo.data_expectativa && (
+                                    {objetivoBar && (
                                         <div
                                             className={`${styles.ganttBar} ${styles.objetivoBar}`}
                                             style={objetivoBar}
-                                            title={`${objetivo.codigo}: Expectativa ${formatDate(objetivo.data_expectativa)}`}
+                                            title={`${objetivo.codigo}: ${formatDate(objetivo.data_inicio)} - ${formatDate(objetivo.data_expectativa)}`}
                                         >
-                                            <span className={styles.barDate}>{formatDate(objetivo.data_expectativa)}</span>
+                                            <span className={styles.barDate}>
+                                                {formatDate(objetivo.data_inicio)} - {formatDate(objetivo.data_expectativa)}
+                                            </span>
                                         </div>
                                     )}
                                 </div>
 
                                 {/* Barras das tarefas */}
                                 {tarefasDoObjetivo.map(tarefa => {
-                                    const bar = getBarPosition(tarefa.created_at, tarefa.data_expectativa);
+                                    const bar = getBarPosition(tarefa.data_inicio, tarefa.data_expectativa);
                                     const overdue = isOverdue(tarefa);
                                     const exceeds = tarefaExceedsObjetivo(tarefa, objetivo);
 
@@ -197,11 +203,13 @@ const GanttChart = ({ objetivos, tarefas }) => {
 
                                     return (
                                         <div key={tarefa.id} className={`${styles.ganttBarRow} ${styles.tarefaBarRow}`}>
-                                            <div
-                                                className={barClass}
-                                                style={bar}
-                                                title={`${tarefa.titulo || tarefa.descricao}: ${tarefa.concluida ? 'Concluída' : (overdue ? 'Atrasada' : 'Pendente')}${exceeds ? ' - Ultrapassa objetivo' : ''}`}
-                                            />
+                                            {bar && (
+                                                <div
+                                                    className={barClass}
+                                                    style={bar}
+                                                    title={`${tarefa.titulo || tarefa.descricao}: ${formatDate(tarefa.data_inicio)} - ${formatDate(tarefa.data_expectativa)} (${tarefa.concluida ? 'Concluída' : (overdue ? 'Atrasada' : 'Pendente')}${exceeds ? ' - Ultrapassa objetivo' : ''})`}
+                                                />
+                                            )}
                                         </div>
                                     );
                                 })}

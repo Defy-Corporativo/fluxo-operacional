@@ -53,13 +53,14 @@ export const getById = async (id) => {
 /**
  * Cria uma nova tarefa (código gerado automaticamente pelo trigger)
  */
-export const create = async ({ titulo, descricao, responsavel, data_expectativa, objetivo_id }) => {
+export const create = async ({ titulo, descricao, responsavel, data_inicio, data_expectativa, objetivo_id }) => {
     const { data, error } = await supabase
         .from(TABLE_NAME)
         .insert({
             titulo,
             descricao,
             responsavel,
+            data_inicio,
             data_expectativa,
             objetivo_id
         })
@@ -73,11 +74,12 @@ export const create = async ({ titulo, descricao, responsavel, data_expectativa,
 /**
  * Atualiza uma tarefa
  */
-export const update = async (id, { titulo, descricao, responsavel, data_expectativa, concluida, ordem }) => {
+export const update = async (id, { titulo, descricao, responsavel, data_inicio, data_expectativa, concluida, ordem }) => {
     const updateData = {};
     if (titulo !== undefined) updateData.titulo = titulo;
     if (descricao !== undefined) updateData.descricao = descricao;
     if (responsavel !== undefined) updateData.responsavel = responsavel;
+    if (data_inicio !== undefined) updateData.data_inicio = data_inicio;
     if (data_expectativa !== undefined) updateData.data_expectativa = data_expectativa;
     if (concluida !== undefined) updateData.concluida = concluida;
     if (ordem !== undefined) updateData.ordem = ordem;

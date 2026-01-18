@@ -50,6 +50,7 @@ const TarefaDetailModal = ({ tarefa, onClose, onUpdate, frenteDescricao, projeto
                 titulo: data.titulo || '',
                 descricao: data.descricao || '',
                 responsavel: data.responsavel || '',
+                data_inicio: data.data_inicio || '',
                 data_expectativa: data.data_expectativa || '',
                 concluida: data.concluida || false
             });
@@ -253,12 +254,23 @@ const TarefaDetailModal = ({ tarefa, onClose, onUpdate, frenteDescricao, projeto
                                             </select>
                                         </div>
                                         <div className={styles.formGroup}>
-                                            <label className={styles.label}>Data Expectativa</label>
+                                            <label className={styles.label}>Data Início *</label>
+                                            <input
+                                                type="date"
+                                                className={styles.input}
+                                                value={editData.data_inicio}
+                                                onChange={(e) => setEditData({ ...editData, data_inicio: e.target.value })}
+                                                required
+                                            />
+                                        </div>
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.label}>Data Expectativa *</label>
                                             <input
                                                 type="date"
                                                 className={styles.input}
                                                 value={editData.data_expectativa}
                                                 onChange={(e) => setEditData({ ...editData, data_expectativa: e.target.value })}
+                                                required
                                             />
                                         </div>
                                     </div>
@@ -279,7 +291,7 @@ const TarefaDetailModal = ({ tarefa, onClose, onUpdate, frenteDescricao, projeto
                             ) : (
                                 /* View Mode - Details Cards */
                                 <div className={styles.detailsGrid}>
-                                    <div className={styles.detailCard}>
+                                    <div className={styles.detailCard} style={{ flex: '0 0 calc(50% - 8px)' }}>
                                         <User size={16} className={styles.detailIcon} />
                                         <div className={styles.detailContent}>
                                             <span className={styles.detailLabel}>Responsável</span>
@@ -288,7 +300,18 @@ const TarefaDetailModal = ({ tarefa, onClose, onUpdate, frenteDescricao, projeto
                                             </span>
                                         </div>
                                     </div>
-                                    <div className={styles.detailCard}>
+                                    <div className={styles.detailCard} style={{ flex: '0 0 calc(25% - 8px)' }}>
+                                        <Calendar size={16} className={styles.detailIcon} />
+                                        <div className={styles.detailContent}>
+                                            <span className={styles.detailLabel}>Data Início</span>
+                                            <span className={styles.detailValue}>
+                                                {tarefaData?.data_inicio
+                                                    ? formatDate(tarefaData.data_inicio)
+                                                    : 'Não definida'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className={styles.detailCard} style={{ flex: '0 0 calc(25% - 8px)' }}>
                                         <Calendar size={16} className={styles.detailIcon} />
                                         <div className={styles.detailContent}>
                                             <span className={styles.detailLabel}>Expectativa</span>

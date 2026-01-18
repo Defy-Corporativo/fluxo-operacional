@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Plus, ChevronRight, ChevronLeft, ChevronDown, Pencil, Trash2, X, Save, Search,
     Target, FolderKanban, Flag, CheckSquare, Filter,
@@ -64,7 +64,7 @@ const FrentesEstrategicas = () => {
 
     // Nova tarefa inline
     const [showNewTarefaForm, setShowNewTarefaForm] = useState(false);
-    const [newTarefaData, setNewTarefaData] = useState({ titulo: '', descricao: '', responsavel: '', data_expectativa: '' });
+    const [newTarefaData, setNewTarefaData] = useState({ titulo: '', descricao: '', responsavel: '', data_inicio: '', data_expectativa: '' });
 
     // Edição inline de objetivo
     const [editingObjetivo, setEditingObjetivo] = useState(false);
@@ -76,11 +76,51 @@ const FrentesEstrategicas = () => {
     const [tarefaSearchTerm, setTarefaSearchTerm] = useState('');
     const [savingObjetivo, setSavingObjetivo] = useState(false);
 
+    // Ref para armazenar referências aos elementos de projeto para scroll
+    const projetoRefs = useRef({});
+
     // Load data
     useEffect(() => {
         loadFrentes();
         loadResponsaveis();
     }, []);
+
+    // Carregar objetivos e tarefas de todos os projetos quando mudar para viewMode 'projeto'
+    useEffect(() => {
+        if (viewMode === 'projeto' && frentes.length > 0) {
+            const loadAllProjectsData = async () => {
+                const allProjetos = frentes.flatMap(f => f.projetos || []);
+                for (const projeto of allProjetos) {
+                    if (!objetivosTree[projeto.id]) {
+                        try {
+                            const tree = await objetivosService.getTree(projeto.id);
+                            setObjetivosTree(prev => ({ ...prev, [projeto.id]: tree }));
+                            // Carregar tarefas para cada objetivo
+                            const loadTarefasRecursive = async (objetivos) => {
+                                for (const obj of objetivos) {
+                                    if (!tarefasMap[obj.id]) {
+                                        try {
+                                            const tarefas = await tarefasService.getByObjetivo(obj.id);
+                                            setTarefasMap(prev => ({ ...prev, [obj.id]: tarefas }));
+                                        } catch (err) {
+                                            console.error('Erro ao carregar tarefas:', err);
+                                        }
+                                    }
+                                    if (obj.children && obj.children.length > 0) {
+                                        await loadTarefasRecursive(obj.children);
+                                    }
+                                }
+                            };
+                            await loadTarefasRecursive(tree);
+                        } catch (error) {
+                            console.error('Erro ao carregar objetivos:', error);
+                        }
+                    }
+                }
+            };
+            loadAllProjectsData();
+        }
+    }, [viewMode, frentes]);
 
     const loadFrentes = async () => {
         try {
@@ -221,6 +261,11 @@ const FrentesEstrategicas = () => {
     // Modal handlers
     const openModal = (type, data = {}) => {
         setModalType(type);
+        // Se for criação de objetivo ou tarefa, preencher data_inicio com data atual
+        if ((type === 'objetivo' || type === 'tarefa') && !data.id) {
+            const today = new Date().toISOString().split('T')[0];
+            data = { ...data, data_inicio: today };
+        }
         setModalData(data);
         setShowModal(true);
     };
@@ -264,6 +309,7 @@ const FrentesEstrategicas = () => {
                             titulo: modalData.titulo,
                             descricao: modalData.descricao,
                             responsavel: modalData.responsavel,
+                            data_inicio: modalData.data_inicio || null,
                             data_expectativa: modalData.data_expectativa || null
                         });
                     } else {
@@ -271,6 +317,7 @@ const FrentesEstrategicas = () => {
                             titulo: modalData.titulo,
                             descricao: modalData.descricao,
                             responsavel: modalData.responsavel,
+                            data_inicio: modalData.data_inicio || null,
                             data_expectativa: modalData.data_expectativa || null,
                             projeto_id: modalData.projeto_id,
                             parent_id: modalData.parent_id || null
@@ -285,6 +332,7 @@ const FrentesEstrategicas = () => {
                             titulo: modalData.titulo,
                             descricao: modalData.descricao,
                             responsavel: modalData.responsavel,
+                            data_inicio: modalData.data_inicio || null,
                             data_expectativa: modalData.data_expectativa || null
                         });
                     } else {
@@ -292,6 +340,7 @@ const FrentesEstrategicas = () => {
                             titulo: modalData.titulo,
                             descricao: modalData.descricao,
                             responsavel: modalData.responsavel,
+                            data_inicio: modalData.data_inicio || null,
                             data_expectativa: modalData.data_expectativa || null,
                             objetivo_id: modalData.objetivo_id
                         });
@@ -411,12 +460,13 @@ const FrentesEstrategicas = () => {
 
     const handleShowNewTarefaForm = () => {
         setShowNewTarefaForm(true);
-        setNewTarefaData({ titulo: '', descricao: '', responsavel: '', data_expectativa: '' });
+        const today = new Date().toISOString().split('T')[0];
+        setNewTarefaData({ titulo: '', descricao: '', responsavel: '', data_inicio: today, data_expectativa: '' });
     };
 
     const handleCancelNewTarefa = () => {
         setShowNewTarefaForm(false);
-        setNewTarefaData({ titulo: '', descricao: '', responsavel: '', data_expectativa: '' });
+        setNewTarefaData({ titulo: '', descricao: '', responsavel: '', data_inicio: '', data_expectativa: '' });
     };
 
     const handleCreateTarefaInline = async () => {
@@ -428,7 +478,7 @@ const FrentesEstrategicas = () => {
                 objetivo_id: selectedObjetivo.id
             });
             setShowNewTarefaForm(false);
-            setNewTarefaData({ titulo: '', descricao: '', responsavel: '', data_expectativa: '' });
+            setNewTarefaData({ titulo: '', descricao: '', responsavel: '', data_inicio: '', data_expectativa: '' });
             await loadTarefas(selectedObjetivo.id);
         } catch (error) {
             console.error('Erro ao criar tarefa:', error);
@@ -996,35 +1046,149 @@ const FrentesEstrategicas = () => {
                                     }
                                     return true;
                                 })
-                                .map(projeto => (
-                                    <div key={projeto.id} className={styles.projetoCard}>
+                                .map(projeto => {
+                                    const projetoObjetivos = objetivosTree[projeto.id] || [];
+                                    const isExpanded = expandedProjetos[projeto.id];
+
+                                    // Função para calcular tarefas de um objetivo (incluindo children)
+                                    const calcTarefasObjetivo = (obj) => {
+                                        const tarefas = tarefasMap[obj.id] || [];
+                                        let total = tarefas.length;
+                                        let concluidas = tarefas.filter(t => t.concluida).length;
+                                        if (obj.children && obj.children.length > 0) {
+                                            obj.children.forEach(child => {
+                                                const childStats = calcTarefasObjetivo(child);
+                                                total += childStats.total;
+                                                concluidas += childStats.concluidas;
+                                            });
+                                        }
+                                        return { total, concluidas };
+                                    };
+
+                                    return (
                                         <div
-                                            className={styles.projetoHeader}
-                                            onClick={() => {
-                                                // Navigate to the frente and open this project
-                                                setSelectedFrente(projeto.frente);
-                                                setExpandedProjetos(prev => ({ ...prev, [projeto.id]: true }));
-                                                if (!objetivosTree[projeto.id]) {
-                                                    loadObjetivos(projeto.id);
-                                                }
-                                            }}
+                                            key={projeto.id}
+                                            className={styles.projetoCard}
+                                            ref={el => projetoRefs.current[projeto.id] = el}
                                         >
-                                            <div className={styles.projetoInfo}>
-                                                <span className={styles.projetoCodigo}>{projeto.codigo}</span>
-                                                <span className={styles.projetoDescricao}>{projeto.descricao}</span>
+                                            <div
+                                                className={styles.projetoHeader}
+                                                onClick={async () => {
+                                                    // Fechar todos os outros projetos, manter só o selecionado expandido
+                                                    const newExpanded = {};
+                                                    newExpanded[projeto.id] = !expandedProjetos[projeto.id];
+                                                    setExpandedProjetos(newExpanded);
+
+                                                    // Carregar objetivos se não carregados
+                                                    if (!objetivosTree[projeto.id]) {
+                                                        await loadObjetivos(projeto.id);
+                                                        // Carregar tarefas para cada objetivo
+                                                        const tree = await objetivosService.getTree(projeto.id);
+                                                        const loadTarefasRecursive = async (objetivos) => {
+                                                            for (const obj of objetivos) {
+                                                                if (!tarefasMap[obj.id]) {
+                                                                    const tarefas = await tarefasService.getByObjetivo(obj.id);
+                                                                    setTarefasMap(prev => ({ ...prev, [obj.id]: tarefas }));
+                                                                }
+                                                                if (obj.children && obj.children.length > 0) {
+                                                                    await loadTarefasRecursive(obj.children);
+                                                                }
+                                                            }
+                                                        };
+                                                        await loadTarefasRecursive(tree);
+                                                    }
+
+                                                    // Scroll suave até o projeto selecionado
+                                                    setTimeout(() => {
+                                                        if (projetoRefs.current[projeto.id]) {
+                                                            projetoRefs.current[projeto.id].scrollIntoView({
+                                                                behavior: 'smooth',
+                                                                block: 'start'
+                                                            });
+                                                        }
+                                                    }, 100);
+                                                }}
+                                            >
+                                                <div className={styles.projetoInfo}>
+                                                    <span className={styles.projetoCodigo}>{projeto.codigo}</span>
+                                                    <span className={styles.projetoDescricao}>{projeto.descricao}</span>
+                                                </div>
+                                                <div className={styles.projetoMeta}>
+                                                    <span className={styles.frenteTag}>
+                                                        <Target size={12} />
+                                                        {projeto.frente.codigo}
+                                                    </span>
+                                                </div>
+                                                <div className={styles.projetoActions}>
+                                                    <ChevronRight
+                                                        size={20}
+                                                        className={`${styles.expandIcon} ${isExpanded ? styles.expanded : ''}`}
+                                                    />
+                                                </div>
                                             </div>
-                                            <div className={styles.projetoMeta}>
-                                                <span className={styles.frenteTag}>
-                                                    <Target size={12} />
-                                                    {projeto.frente.codigo}
-                                                </span>
-                                            </div>
-                                            <div className={styles.projetoActions}>
-                                                <ChevronRight size={20} className={styles.expandIcon} />
-                                            </div>
+
+                                            {/* Lista de objetivos quando expandido */}
+                                            {isExpanded && (
+                                                <div className={styles.projetoContent}>
+                                                    {projetoObjetivos.length > 0 ? (
+                                                        projetoObjetivos.map(objetivo => {
+                                                            const stats = calcTarefasObjetivo(objetivo);
+                                                            const hasPending = stats.concluidas < stats.total;
+                                                            return (
+                                                                <div
+                                                                    key={objetivo.id}
+                                                                    className={styles.objetivoItem}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        // Navegar para a frente e abrir o projeto com o objetivo
+                                                                        setSelectedFrente(projeto.frente);
+                                                                        setExpandedProjetos(prev => ({ ...prev, [projeto.id]: true }));
+                                                                        setSelectedObjetivo(objetivo);
+                                                                        setSelectedProjetoId(projeto.id);
+                                                                        if (!tarefasMap[objetivo.id]) {
+                                                                            loadTarefas(objetivo.id);
+                                                                        }
+                                                                    }}
+                                                                    style={{ cursor: 'pointer' }}
+                                                                >
+                                                                    <div className={styles.objetivoMain}>
+                                                                        <div className={styles.objetivoTop}>
+                                                                            <span className={styles.objetivoCodigo}>{objetivo.codigo}</span>
+                                                                            <span className={styles.objetivoDescricao}>{objetivo.titulo || objetivo.descricao}</span>
+                                                                        </div>
+                                                                        <div className={styles.objetivoMeta}>
+                                                                            {objetivo.responsavel && (
+                                                                                <span className={styles.objetivoMetaItem}>
+                                                                                    <User size={12} /> {objetivo.responsavel}
+                                                                                </span>
+                                                                            )}
+                                                                            {objetivo.data_expectativa && (
+                                                                                <span className={styles.objetivoMetaItem}>
+                                                                                    <Calendar size={12} /> {formatDate(objetivo.data_expectativa)}
+                                                                                </span>
+                                                                            )}
+                                                                            {stats.total > 0 && (
+                                                                                <span className={`${styles.taskCountBadge} ${hasPending ? styles.pending : ''}`}>
+                                                                                    <CheckSquare size={12} />
+                                                                                    {stats.concluidas}/{stats.total}
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })
+                                                    ) : (
+                                                        <div className={styles.emptyObjectives}>
+                                                            <Flag size={16} />
+                                                            Nenhum objetivo cadastrado
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
-                                    </div>
-                                ))
+                                    );
+                                })
                         )}
                     </div>
                 </>
@@ -1141,13 +1305,26 @@ const FrentesEstrategicas = () => {
                                                     ))}
                                                 </select>
                                             </div>
+                                        </div>
+                                        <div className={styles.formRow}>
                                             <div className={styles.formGroup}>
-                                                <label className={styles.formLabel}>Data Expectativa</label>
+                                                <label className={styles.formLabel}>Data Início *</label>
+                                                <input
+                                                    type="date"
+                                                    className={styles.formInput}
+                                                    value={modalData.data_inicio || ''}
+                                                    onChange={(e) => setModalData({ ...modalData, data_inicio: e.target.value })}
+                                                    required
+                                                />
+                                            </div>
+                                            <div className={styles.formGroup}>
+                                                <label className={styles.formLabel}>Data Expectativa *</label>
                                                 <input
                                                     type="date"
                                                     className={styles.formInput}
                                                     value={modalData.data_expectativa || ''}
                                                     onChange={(e) => setModalData({ ...modalData, data_expectativa: e.target.value })}
+                                                    required
                                                 />
                                             </div>
                                         </div>
@@ -1180,7 +1357,7 @@ const FrentesEstrategicas = () => {
                                                 rows={3}
                                             />
                                         </div>
-                                        <div className={styles.formRow}>
+                                        <div className={styles.formRow} style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
                                             <div className={styles.formGroup}>
                                                 <label className={styles.formLabel}>Responsável</label>
                                                 <select
@@ -1197,12 +1374,23 @@ const FrentesEstrategicas = () => {
                                                 </select>
                                             </div>
                                             <div className={styles.formGroup}>
-                                                <label className={styles.formLabel}>Data Expectativa</label>
+                                                <label className={styles.formLabel}>Data Início *</label>
+                                                <input
+                                                    type="date"
+                                                    className={styles.formInput}
+                                                    value={modalData.data_inicio || ''}
+                                                    onChange={(e) => setModalData({ ...modalData, data_inicio: e.target.value })}
+                                                    required
+                                                />
+                                            </div>
+                                            <div className={styles.formGroup}>
+                                                <label className={styles.formLabel}>Data Expectativa *</label>
                                                 <input
                                                     type="date"
                                                     className={styles.formInput}
                                                     value={modalData.data_expectativa || ''}
                                                     onChange={(e) => setModalData({ ...modalData, data_expectativa: e.target.value })}
+                                                    required
                                                 />
                                             </div>
                                         </div>
@@ -1348,7 +1536,7 @@ const FrentesEstrategicas = () => {
                                             placeholder="Detalhes adicionais (opcional)"
                                         />
                                     </div>
-                                    <div className={styles.formRow}>
+                                    <div className={styles.formRow} style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
                                         <div className={styles.formGroup}>
                                             <label className={styles.formLabel}>Responsável</label>
                                             <select
@@ -1363,6 +1551,15 @@ const FrentesEstrategicas = () => {
                                                     </option>
                                                 ))}
                                             </select>
+                                        </div>
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.formLabel}>Data Início</label>
+                                            <input
+                                                type="date"
+                                                className={styles.formInput}
+                                                value={newTarefaData.data_inicio}
+                                                onChange={(e) => setNewTarefaData({ ...newTarefaData, data_inicio: e.target.value })}
+                                            />
                                         </div>
                                         <div className={styles.formGroup}>
                                             <label className={styles.formLabel}>Data Expectativa</label>
@@ -1422,8 +1619,41 @@ const FrentesEstrategicas = () => {
                                         <>
                                             {/* Objetivo Info - Cards estilo tarefa */}
                                             <div className={styles.objetivoDetailCards}>
-                                                {/* Localização Card */}
-                                                <div className={styles.detailCard} style={{ gridColumn: '1 / -1' }}>
+                                                {/* Responsável, Data Início, Data Expectativa - mesma linha */}
+                                                <div className={styles.detailCard} style={{ flex: '1 1 calc(50% - 8px)' }}>
+                                                    <User size={16} className={styles.detailCardIcon} />
+                                                    <div className={styles.detailCardContent}>
+                                                        <span className={styles.detailCardLabel}>Responsável</span>
+                                                        <span className={styles.detailCardValue}>
+                                                            {selectedObjetivo.responsavel || 'Não definido'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Data Início Card */}
+                                                <div className={styles.detailCard} style={{ flex: '1 1 calc(25% - 8px)' }}>
+                                                    <Calendar size={16} className={styles.detailCardIcon} />
+                                                    <div className={styles.detailCardContent}>
+                                                        <span className={styles.detailCardLabel}>Data Início</span>
+                                                        <span className={styles.detailCardValue}>
+                                                            {selectedObjetivo.data_inicio ? formatDate(selectedObjetivo.data_inicio) : 'Não definida'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Expectativa Card */}
+                                                <div className={styles.detailCard} style={{ flex: '1 1 calc(25% - 8px)' }}>
+                                                    <Calendar size={16} className={styles.detailCardIcon} />
+                                                    <div className={styles.detailCardContent}>
+                                                        <span className={styles.detailCardLabel}>Expectativa</span>
+                                                        <span className={styles.detailCardValue}>
+                                                            {selectedObjetivo.data_expectativa ? formatDate(selectedObjetivo.data_expectativa) : 'Não definida'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Localização Card - linha inteira */}
+                                                <div className={styles.detailCard} style={{ flex: '1 1 100%', width: '100%' }}>
                                                     <FolderKanban size={16} className={styles.detailCardIcon} />
                                                     <div className={styles.detailCardContent}>
                                                         <span className={styles.detailCardLabel}>Localização</span>
@@ -1439,28 +1669,6 @@ const FrentesEstrategicas = () => {
                                                                 <span>{selectedFrente.projetos.find(p => p.id === selectedProjetoId).descricao}</span>
                                                             )}
                                                         </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Responsável Card */}
-                                                <div className={styles.detailCard}>
-                                                    <User size={16} className={styles.detailCardIcon} />
-                                                    <div className={styles.detailCardContent}>
-                                                        <span className={styles.detailCardLabel}>Responsável</span>
-                                                        <span className={styles.detailCardValue}>
-                                                            {selectedObjetivo.responsavel || 'Não definido'}
-                                                        </span>
-                                                    </div>
-                                                </div>
-
-                                                {/* Expectativa Card */}
-                                                <div className={styles.detailCard}>
-                                                    <Calendar size={16} className={styles.detailCardIcon} />
-                                                    <div className={styles.detailCardContent}>
-                                                        <span className={styles.detailCardLabel}>Expectativa</span>
-                                                        <span className={styles.detailCardValue}>
-                                                            {selectedObjetivo.data_expectativa ? formatDate(selectedObjetivo.data_expectativa) : 'Não definida'}
-                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1604,20 +1812,27 @@ const FrentesEstrategicas = () => {
                                     // Botões para Nova Tarefa
                                     <>
                                         <button
-                                            className={styles.footerCloseBtn}
+                                            className={styles.cancelBtn}
                                             onClick={handleCancelNewTarefa}
                                         >
                                             Cancelar
                                         </button>
-                                        <button
-                                            className={styles.primaryBtn}
-                                            onClick={handleCreateTarefaInline}
-                                            disabled={!newTarefaData.titulo?.trim() || savingTarefa}
-                                            style={{ marginLeft: '8px' }}
-                                        >
-                                            <Save size={16} style={{ marginRight: '4px' }} />
-                                            {savingTarefa ? 'Criando...' : 'Criar Tarefa'}
-                                        </button>
+                                        <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto' }}>
+                                            <button
+                                                className={styles.primaryBtn}
+                                                onClick={handleCreateTarefaInline}
+                                                disabled={!newTarefaData.titulo?.trim() || savingTarefa}
+                                            >
+                                                <Save size={16} style={{ marginRight: '4px' }} />
+                                                {savingTarefa ? 'Criando...' : 'Criar Tarefa'}
+                                            </button>
+                                            <button
+                                                className={styles.footerCloseBtn}
+                                                onClick={() => { setSelectedObjetivo(null); setShowNewTarefaForm(false); setTarefaFilterPendingOnly(false); setTarefaFilterDate(''); setTarefaSearchTerm(''); }}
+                                            >
+                                                Fechar
+                                            </button>
+                                        </div>
                                     </>
                                 ) : (
                                     // Botões padrão: Editar e Fechar (Editar à esquerda, Fechar à direita)

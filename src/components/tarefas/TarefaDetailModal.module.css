@@ -161,14 +161,18 @@
 
 /* Details Grid */
 .detailsGrid {
-    display: grid;
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-wrap: wrap;
     gap: var(--spacing-sm);
 }
 
-@media (min-width: 480px) {
+@media (max-width: 480px) {
     .detailsGrid {
-        grid-template-columns: 1fr 1fr;
+        flex-direction: column;
+    }
+
+    .detailsGrid .detailCard {
+        flex: 1 1 100% !important;
     }
 }
 
@@ -225,7 +229,8 @@
 }
 
 .detailCard.fullWidth {
-    grid-column: 1 / -1;
+    flex: 1 1 100% !important;
+    width: 100%;
 }
 
 .detailIcon {
