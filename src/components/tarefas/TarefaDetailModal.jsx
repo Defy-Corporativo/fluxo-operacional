@@ -322,7 +322,7 @@ const TarefaDetailModal = ({ tarefa, onClose, onUpdate, frenteDescricao, projeto
                                                     {tarefaData?.objetivo && (
                                                         <>
                                                             <Flag size={12} style={{ opacity: 0.6 }} />
-                                                            <span>{tarefaData.objetivo.descricao}</span>
+                                                            <span>{tarefaData.objetivo.titulo || tarefaData.objetivo.descricao}</span>
                                                         </>
                                                     )}
                                                 </div>

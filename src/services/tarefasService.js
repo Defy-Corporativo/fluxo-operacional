@@ -40,7 +40,7 @@ export const getById = async (id) => {
         .from(TABLE_NAME)
         .select(`
             *,
-            objetivo:flop_objetivos(id, codigo, descricao),
+            objetivo:flop_objetivos(id, codigo, titulo, descricao),
             notas:flop_notas(*)
         `)
         .eq('id', id)
