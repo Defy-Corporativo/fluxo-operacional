@@ -2,6 +2,61 @@
 -- Fluxo Operacional - Database Schema
 -- Prefixo flop_ em TODOS os componentes
 -- =============================================
+-- SCRIPT PARA RECRIAR O BANCO DE DADOS
+-- Este script contém tanto DROP quanto CREATE statements
+-- Pode ser executado para recriar todo o schema do zero
+--
+-- ATENÇÃO: Executar este script irá APAGAR todos os dados!
+-- =============================================
+
+-- =============================================
+-- PARTE 0: DROP de todos os objetos (ordem inversa)
+-- =============================================
+
+-- Remover Policies (RLS)
+DROP POLICY IF EXISTS flop_policy_notas ON flop_notas;
+DROP POLICY IF EXISTS flop_policy_tarefas ON flop_tarefas;
+DROP POLICY IF EXISTS flop_policy_objetivos ON flop_objetivos;
+DROP POLICY IF EXISTS flop_policy_projetos ON flop_projetos;
+DROP POLICY IF EXISTS flop_policy_frentes ON flop_frentes_estrategicas;
+DROP POLICY IF EXISTS flop_policy_responsaveis ON flop_responsaveis;
+
+-- Remover Triggers
+DROP TRIGGER IF EXISTS flop_trigger_responsaveis_updated_at ON flop_responsaveis;
+DROP TRIGGER IF EXISTS flop_trigger_frentes_updated_at ON flop_frentes_estrategicas;
+DROP TRIGGER IF EXISTS flop_trigger_projetos_updated_at ON flop_projetos;
+DROP TRIGGER IF EXISTS flop_trigger_objetivos_updated_at ON flop_objetivos;
+DROP TRIGGER IF EXISTS flop_trigger_tarefas_updated_at ON flop_tarefas;
+DROP TRIGGER IF EXISTS flop_trigger_frente_codigo ON flop_frentes_estrategicas;
+DROP TRIGGER IF EXISTS flop_trigger_projeto_codigo ON flop_projetos;
+DROP TRIGGER IF EXISTS flop_trigger_objetivo_codigo ON flop_objetivos;
+DROP TRIGGER IF EXISTS flop_trigger_tarefa_codigo ON flop_tarefas;
+
+-- Remover Functions
+DROP FUNCTION IF EXISTS flop_update_updated_at();
+DROP FUNCTION IF EXISTS flop_generate_frente_codigo();
+DROP FUNCTION IF EXISTS flop_generate_projeto_codigo();
+DROP FUNCTION IF EXISTS flop_generate_objetivo_codigo();
+DROP FUNCTION IF EXISTS flop_generate_tarefa_codigo();
+
+-- Remover Indexes
+DROP INDEX IF EXISTS flop_idx_projetos_frente;
+DROP INDEX IF EXISTS flop_idx_objetivos_projeto;
+DROP INDEX IF EXISTS flop_idx_objetivos_parent;
+DROP INDEX IF EXISTS flop_idx_tarefas_objetivo;
+DROP INDEX IF EXISTS flop_idx_notas_tarefa;
+
+-- Remover Tabelas (ordem inversa de dependência)
+DROP TABLE IF EXISTS flop_notas CASCADE;
+DROP TABLE IF EXISTS flop_tarefas CASCADE;
+DROP TABLE IF EXISTS flop_objetivos CASCADE;
+DROP TABLE IF EXISTS flop_projetos CASCADE;
+DROP TABLE IF EXISTS flop_frentes_estrategicas CASCADE;
+DROP TABLE IF EXISTS flop_responsaveis CASCADE;
+
+-- =============================================
+-- PARTE 1: CRIAÇÃO
+-- =============================================
 
 -- Habilitar extensão UUID
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
